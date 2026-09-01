@@ -16,8 +16,7 @@
     --ink:#1f3d2e; --ink-soft:#4a6353; --ink-faint:#7c9184;
     --emerald:#2e7d5b; --sage:#6a9a5b;
     --marigold:#e0a530; --clay:#c96f3a; --coral:#d98e78;
-    --line:rgba(31,61,46,.14);
-    --accent:var(--emerald);
+    --line:rgba(31,61,46,.14); --accent:var(--emerald);
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
@@ -28,67 +27,60 @@
   }
   a{color:inherit}
   :focus-visible{outline:2px solid var(--emerald);outline-offset:3px;border-radius:2px}
-  #app{display:grid;grid-template-columns:minmax(380px,460px) 1fr;height:100vh}
 
-  /* ---------- Reading side ---------- */
-  #feed{overflow-y:auto;position:relative}
-  .masthead{padding:44px 46px 22px}
-  .masthead h1{
-    margin:0;font-size:38px;font-weight:700;line-height:1.05;letter-spacing:-.015em;
-    white-space:nowrap;
-  }
-  .masthead h1 .gloss{font-weight:400;font-style:italic;font-size:23px;color:var(--emerald)}
-  .masthead .byline{margin:10px 0 0;font-size:15px;font-style:italic;color:var(--ink-soft);display:flex;align-items:center;gap:10px}
-  .portrait{width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 0 0 3px var(--cloud),0 3px 10px rgba(31,61,46,.22)}
-  .rule{height:1px;background:var(--line);margin:0 46px}
-
-  .posts{list-style:none;margin:0;padding:8px 0 80px}
-  .post{padding:26px 46px;cursor:pointer;position:relative;transition:background .2s ease}
-  .post + .post{border-top:1px solid var(--line)}
-  .post:hover,.post:focus-within{background:rgba(251,250,243,.5)}
-  .post.active{background:rgba(251,250,243,.8)}
-  .post.active::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pc,var(--accent))}
-  .post .meta{font-size:12.5px;letter-spacing:.04em;color:var(--ink-faint);margin:0 0 8px;font-weight:500}
-  .post .meta .place{color:var(--pc,var(--emerald));font-weight:600}
-  .post .meta .place::before{content:"◆ ";font-size:9px;vertical-align:1.5px}
-  .post h2{margin:0 0 10px;font-size:23px;font-weight:600;line-height:1.15;letter-spacing:-.01em}
-  .post .excerpt{margin:0;font-size:16px;line-height:1.62;color:var(--ink-soft);max-width:48ch}
-  .post .body{max-height:0;overflow:hidden;opacity:0;transition:max-height .5s cubic-bezier(.4,0,.2,1),opacity .35s ease,margin .35s ease;font-size:16.5px;line-height:1.72;color:var(--ink);max-width:48ch}
-  .post.active .body{max-height:1600px;opacity:1;margin:16px 0 2px}
-  .post .body p{margin:0 0 1em}
-  .post .body img.photo{width:100%;border-radius:6px;margin:6px 0 14px;box-shadow:0 6px 20px rgba(31,61,46,.16)}
-  .post .substack{display:inline-flex;gap:6px;margin-top:4px;font-size:14px;font-style:italic;color:var(--pc,var(--emerald));font-weight:500;text-decoration:none;border-bottom:1px solid transparent}
-  .post .substack:hover{border-bottom-color:currentColor}
-  .post .turn{display:block;margin-top:12px;font-size:13px;font-style:italic;color:var(--ink-faint)}
-  .post.active .turn{display:none}
-
-  /* ---------- Map ---------- */
+  /* map fixed on the right; reading column scrolls independently */
+  #app{display:grid;grid-template-columns:minmax(400px,520px) 1fr;height:100vh}
+  #feed{overflow-y:auto;position:relative;scroll-behavior:smooth}
   #map{height:100vh;background:#eae4d3;position:relative}
+
+  .masthead{padding:46px 52px 24px}
+  .masthead .top{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .masthead h1{margin:0;font-size:38px;font-weight:700;line-height:1.05;letter-spacing:-.015em;white-space:nowrap}
+  .masthead h1 .gloss{font-weight:400;font-style:italic;font-size:23px;color:var(--emerald)}
+  .byline-photo{width:96px;height:64px;border-radius:8px;object-fit:cover;flex:none;box-shadow:0 3px 12px rgba(31,61,46,.22)}
+  .masthead .byline{margin:16px 0 0;font-size:15px;font-style:italic;color:var(--ink-soft)}
+  .masthead .intro{margin:14px 0 0;font-size:15.5px;line-height:1.6;color:var(--ink-soft);max-width:44ch}
+  .rule{height:1px;background:var(--line);margin:0 52px}
+
+  .posts{list-style:none;margin:0;padding:0 0 30vh}
+  .post{padding:38px 52px;position:relative;scroll-margin-top:24px}
+  .post + .post{border-top:1px solid var(--line)}
+  .post::before{content:"";position:absolute;left:0;top:38px;height:26px;width:4px;background:var(--pc,var(--accent));border-radius:0 2px 2px 0;opacity:0;transition:opacity .3s ease}
+  .post.here::before{opacity:1}
+  .post .meta{font-size:12.5px;letter-spacing:.04em;color:var(--ink-faint);margin:0 0 10px;font-weight:500}
+  .post .place{color:var(--pc,var(--emerald));font-weight:600;cursor:pointer;border-bottom:1px dotted transparent}
+  .post .place:hover{border-bottom-color:var(--pc,var(--emerald))}
+  .post .place::before{content:"◆ ";font-size:9px;vertical-align:1.5px}
+  .post h2{margin:0 0 14px;font-size:25px;font-weight:600;line-height:1.15;letter-spacing:-.01em}
+  .post .body{font-size:16.5px;line-height:1.74;color:var(--ink);max-width:46ch}
+  .post .body p{margin:0 0 1.1em}
+  .post .body img.photo{width:100%;border-radius:8px;margin:8px 0 18px;box-shadow:0 8px 24px rgba(31,61,46,.16)}
+  .post .substack{display:inline-flex;gap:6px;margin-top:2px;font-size:14.5px;font-style:italic;color:var(--pc,var(--emerald));font-weight:500;text-decoration:none;border-bottom:1px solid transparent}
+  .post .substack:hover{border-bottom-color:currentColor}
+
+  /* pins */
+  .pin{width:14px;height:14px;cursor:pointer;transition:transform .18s ease}
+  .pin .dot{width:14px;height:14px;border-radius:50%;background:var(--pc,var(--emerald));border:2.5px solid var(--cloud);box-shadow:0 0 0 1px rgba(31,61,46,.3),0 2px 5px rgba(0,0,0,.35)}
+  .pin:hover{transform:scale(1.28)}
+  .pin.here{transform:scale(1.16)}
+  .pin.here .dot{box-shadow:0 0 0 8px color-mix(in srgb,var(--pc,var(--emerald)) 20%,transparent),0 0 0 1px var(--pc,var(--emerald)),0 2px 5px rgba(0,0,0,.35)}
+  .pin .plabel{position:absolute;left:50%;top:-9px;transform:translate(-50%,-100%);white-space:nowrap;font-family:"Bitter",serif;font-size:12.5px;font-weight:600;color:var(--ink);background:rgba(251,250,243,.94);padding:3px 9px;border-radius:3px;border:1px solid var(--line);box-shadow:0 3px 10px rgba(31,61,46,.18);opacity:0;transition:opacity .18s ease;pointer-events:none}
+  .pin.here .plabel{opacity:1}
+
   .maplibregl-ctrl-attrib{font-size:10px;background:rgba(251,250,243,.85)!important;font-family:system-ui,sans-serif}
   .maplibregl-ctrl-group{background:var(--cloud);border:1px solid var(--line)!important;box-shadow:none!important}
-  /* pin: a small contour-survey mark */
-  .pin{width:14px;height:14px;cursor:pointer;transition:transform .16s ease}
-  .pin .dot{width:14px;height:14px;border-radius:50%;background:var(--pc,var(--emerald));border:2.5px solid var(--cloud);box-shadow:0 0 0 1px rgba(31,61,46,.3),0 2px 5px rgba(0,0,0,.35)}
-  .pin:hover{transform:scale(1.25)}
-  .pin.active{transform:scale(1.15)}
-  .pin.active .dot{box-shadow:0 0 0 8px color-mix(in srgb,var(--pc,var(--emerald)) 20%,transparent),0 0 0 1px var(--pc,var(--emerald)),0 2px 5px rgba(0,0,0,.35)}
-  /* floating place label tied to active pin */
-  .pin .plabel{position:absolute;left:50%;top:-8px;transform:translate(-50%,-100%);white-space:nowrap;
-    font-family:"Bitter",serif;font-size:12.5px;font-weight:600;color:var(--ink);
-    background:rgba(251,250,243,.92);padding:3px 9px;border-radius:3px;border:1px solid var(--line);
-    box-shadow:0 3px 10px rgba(31,61,46,.18);opacity:0;transition:opacity .18s ease;pointer-events:none}
-  .pin.active .plabel{opacity:1}
 
   @media (max-width:820px){
     #app{display:block;height:auto}
-    #map{height:42vh;position:sticky;top:0;z-index:1;border-bottom:1px solid var(--line)}
-    #feed{overflow:visible}
+    #map{height:40vh;position:sticky;top:0;z-index:1;border-bottom:1px solid var(--line)}
+    #feed{overflow:visible;height:auto}
     .masthead{padding:28px 22px 16px}
-    .masthead h1{font-size:30px}
-    .masthead h1 .gloss{font-size:19px}
+    .masthead h1{font-size:30px}.masthead h1 .gloss{font-size:19px}
+    .byline-photo{width:80px;height:54px}
     .rule{margin:0 22px}
-    .post{padding:22px}
-    .post .excerpt,.post .body{max-width:none}
+    .post{padding:30px 22px}
+    .post .body{max-width:none}
+    .posts{padding-bottom:40px}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -97,8 +89,12 @@
 <div id="app">
   <div id="feed">
     <header class="masthead">
-      <h1>Andares <span class="gloss">(wandering)</span></h1>
+      <div class="top">
+        <h1>Andares <span class="gloss">(wandering)</span></h1>
+        <img class="byline-photo" src="pat.jpg" alt="Pat outdoors, with mountains and water behind him">
+      </div>
       <p class="byline">with Pat</p>
+      <p class="intro">A journal kept by place. Tap a pin, or a place-name in a post, to see where it happened.</p>
     </header>
     <div class="rule"></div>
     <ul class="posts" id="posts" aria-label="Journal entries"></ul>
@@ -107,23 +103,19 @@
 </div>
 
 <script>
-/* ===== POSTS — edit these to add entries. Fields documented in earlier build. ===== */
 const PRESET={emerald:"#2e7d5b",marigold:"#e0a530",clay:"#c96f3a",coral:"#d98e78",sage:"#6a9a5b",pine:"#1f3d2e"};
 const posts=[
   {coordinates:[-90.4478,15.0876],place:"Salamá",title:"The town with no addresses",date:"March 4",color:"marigold",
-   excerpt:"Nobody here navigates by street number. You navigate by memory — the yellow house, the second tienda, where the pavement gives out.",
    body:"<p>Nobody here navigates by street number. You navigate by memory — the yellow house past the church, the second tienda, the corner where the pavement gives out and the dust begins.</p><p>I spent a decade making maps that assume an address is a fixed truth. Here an address is a story you tell, and it changes depending on who's listening.</p>",
    photo:"",photoAlt:"",substack:""},
   {coordinates:[-90.3986,15.1123],place:"Camino a San Jerónimo",title:"Foreground, background",date:"March 19",color:"emerald",
-   excerpt:"A photographer would call it middle distance — not the thing you're looking at, or the horizon behind it, but the part where life actually happens.",
    body:"<p>A photographer would call it the middle distance: not the thing right in front of the lens, not the blue horizon behind it, but the muddled band in between where the road bends and the fields start and someone is walking a dog you can't quite make out.</p><p>That's where I seem to live now. Far enough from home that it's abstract. Close enough to here that it isn't mine yet.</p>",
    photo:"",photoAlt:"",substack:""},
   {coordinates:[-90.4211,15.0654],place:"Mercado Central",title:"How a road gets named",date:"April 2",color:"clay",
-   excerpt:"Back home I ran a whole policy for this. Here a road is named by whoever's lived on it longest, and the name is right because everyone agrees it is.",
    body:"<p>Back home I wrote the standards for this — a whole resolution about how a road gets a name, who signs off, which font goes on the sign.</p><p>Here a road is named by whoever has lived on it longest, and it's the correct name for exactly as long as everyone agrees it is. I keep reaching for the version of me that had authority over this. He's not useful here. It's a relief, mostly.</p>",
    photo:"",photoAlt:"",substack:""}
 ];
-function colorOf(p){return PRESET[p.color]||p.color||"var(--emerald)";}
+const colorOf=p=>PRESET[p.color]||p.color||"var(--emerald)";
 
 function init(){
   const map=new maplibregl.Map({
@@ -134,42 +126,37 @@ function init(){
     center:[-90.42,15.09],zoom:12,attributionControl:{compact:true}
   });
   map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
-
-  const markers=[];let activeIdx=null;
   const reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
 
-  function openPost(i){
-    document.querySelectorAll(".post").forEach((el,j)=>{el.classList.toggle("active",j===i);el.setAttribute("aria-expanded",j===i?"true":"false");});
-    markers.forEach((m,j)=>m.el.classList.toggle("active",j===i));
-    activeIdx=i;const m=markers[i];
-    if(m){if(!reduce)map.flyTo({center:m.marker.getLngLat(),zoom:14,speed:.6,curve:1.4});else map.setCenter(m.marker.getLngLat());}
-    const card=document.querySelector('.post[data-i="'+i+'"]');if(card)card.scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});
-  }
-  function closePost(i){
+  const markers=[];
+  function mark(i){ // highlight place i (from a deliberate tap), ease map gently, scroll column
+    document.querySelectorAll(".post").forEach((el,j)=>el.classList.toggle("here",j===i));
+    markers.forEach((m,j)=>m.el.classList.toggle("here",j===i));
+    const ll=posts[i].coordinates;
+    if(reduce)map.setCenter(ll);
+    else map.easeTo({center:ll,zoom:Math.max(map.getZoom(),13.5),duration:650,easing:t=>t*(2-t)});
     const card=document.querySelector('.post[data-i="'+i+'"]');
-    card.classList.remove("active");card.setAttribute("aria-expanded","false");
-    markers[i].el.classList.remove("active");activeIdx=null;
+    if(card)card.scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});
   }
-  function toggle(i){(activeIdx===i)?closePost(i):openPost(i);}
 
   const list=document.getElementById("posts");
   posts.forEach((p,i)=>{
     const c=colorOf(p);
     const li=document.createElement("li");li.className="post";li.dataset.i=i;li.style.setProperty("--pc",c);
-    li.tabIndex=0;li.setAttribute("role","button");li.setAttribute("aria-expanded","false");
     const photo=p.photo?('<img class="photo" src="'+p.photo+'" alt="'+(p.photoAlt||"")+'">'):"";
     const sub=p.substack?('<a class="substack" href="'+p.substack+'" target="_blank" rel="noopener">a longer piece on Substack →</a>'):"";
-    li.innerHTML='<p class="meta"><span class="place">'+p.place+'</span> · '+p.date+'</p><h2>'+p.title+'</h2><p class="excerpt">'+p.excerpt+'</p><div class="body">'+photo+p.body+sub+'</div><span class="turn">read →</span>';
-    li.addEventListener("click",()=>toggle(i));
-    li.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle(i);}});
+    li.innerHTML='<p class="meta"><span class="place" role="button" tabindex="0" aria-label="Show '+p.place+' on the map">'+p.place+'</span> · '+p.date+'</p><h2>'+p.title+'</h2><div class="body">'+photo+p.body+sub+'</div>';
+    const place=li.querySelector(".place");
+    place.addEventListener("click",()=>mark(i));
+    place.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();mark(i);}});
     list.appendChild(li);
 
     const el=document.createElement("div");el.className="pin";el.style.setProperty("--pc",c);
     el.innerHTML='<div class="plabel">'+p.place+'</div><div class="dot"></div>';
-    el.setAttribute("role","button");el.setAttribute("aria-label",p.title+", "+p.place);el.tabIndex=0;
+    el.setAttribute("role","button");el.setAttribute("aria-label","Go to "+p.title+", "+p.place);el.tabIndex=0;
     const marker=new maplibregl.Marker({element:el,anchor:"center"}).setLngLat(p.coordinates).addTo(map);
-    el.addEventListener("click",e=>{e.stopPropagation();toggle(i);});
-    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle(i);}});
+    el.addEventListener("click",e=>{e.stopPropagation();mark(i);});
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();mark(i);}});
     markers.push({el,marker});
   });
 
