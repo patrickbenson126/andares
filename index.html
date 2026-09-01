@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Andares — with Pat</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
+<style>
+  :root{
+    --paper:#f6f3ec;--ink:#23201b;--ink-soft:#6a6459;--line:#ddd6c8;
+    --accent:#3f6d5f;--accent-soft:#e3ece8;--marker:#3f6d5f;--marker-active:#c06b3e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+  #app{display:grid;grid-template-columns:minmax(320px,400px) 1fr;height:100vh}
+  #feed{overflow-y:auto;border-right:1px solid var(--line);background:var(--paper)}
+  .masthead{padding:28px 26px 18px;border-bottom:1px solid var(--line)}
+  .masthead h1{margin:0;font-size:30px;font-weight:600;line-height:1.05}
+  .masthead h1 .gloss{font-size:17px;font-weight:400;font-style:italic;color:var(--ink-soft)}
+  .masthead .sub{margin:8px 0 0;color:var(--ink-soft);font-size:14.5px;font-style:italic;line-height:1.4;max-width:34ch}
+  .posts{list-style:none;margin:0;padding:8px 0 40px}
+  .post{padding:18px 26px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s ease}
+  .post:hover{background:#efe9dd}
+  .post.active{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+  .post .place{font-size:12px;color:var(--accent);letter-spacing:.4px;margin:0 0 4px;font-family:ui-sans-serif,system-ui,sans-serif;font-weight:600}
+  .post h2{margin:0 0 6px;font-size:19px;font-weight:600;line-height:1.2}
+  .post .date{color:var(--ink-soft);font-size:13px;font-style:italic}
+  .post .excerpt{margin:8px 0 0;font-size:14.5px;line-height:1.5;color:#443f37}
+  #map{height:100vh;background:#e8e3d7}
+  .maplibregl-popup{max-width:300px!important;font-family:inherit}
+  .maplibregl-popup-content{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:16px 18px;box-shadow:0 6px 24px rgba(0,0,0,.14)}
+  .maplibregl-popup-content h3{margin:0 0 6px;font-size:17px}
+  .maplibregl-popup-content .date{font-size:12.5px;color:var(--ink-soft);font-style:italic}
+  .maplibregl-popup-content p{margin:8px 0 0;font-size:14px;line-height:1.5}
+  .pin{width:16px;height:16px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--marker);border:2px solid var(--paper);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .12s ease,background .12s ease}
+  .pin:hover{transform:rotate(-45deg) scale(1.18)}
+  .pin.active{background:var(--marker-active);transform:rotate(-45deg) scale(1.25)}
+  .maplibregl-ctrl-attrib{font-size:10px;background:rgba(246,243,236,.8)!important}
+  @media (max-width:760px){#app{grid-template-columns:1fr;grid-template-rows:44vh 56vh}#map{height:44vh;order:-1}#feed{height:56vh}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="feed">
+    <div class="masthead">
+      <h1>Andares <span class="gloss">(wandering)</span></h1>
+      <p class="sub">with Pat</p>
+    </div>
+    <ul class="posts" id="posts"></ul>
+  </div>
+  <div id="map"></div>
+</div>
+<script>
+const posts={type:"FeatureCollection",features:[
+  {type:"Feature",geometry:{type:"Point",coordinates:[-90.4478,15.0876]},properties:{id:"salama",place:"Salamá",title:"The town with no addresses",date:"March 4",excerpt:"Nobody here navigates by street number. You navigate by memory — the yellow house, the second tienda, where the pavement gives out.",body:"Nobody here navigates by street number. You navigate by memory — the yellow house past the church, the second tienda, the corner where the pavement gives out and the dust begins. I spent a decade making maps that assume an address is a fixed truth. Here an address is a story you tell, and it changes depending on who's listening."}},
+  {type:"Feature",geometry:{type:"Point",coordinates:[-90.3986,15.1123]},properties:{id:"ridge",place:"Camino a San Jerónimo",title:"Foreground, background",date:"March 19",excerpt:"A photographer would call it middle distance — the zone that isn't the thing you're looking at, or the horizon behind it, but the part where life actually happens.",body:"A photographer would call it the middle distance: not the thing right in front of the lens, not the blue horizon behind it, but the muddled band in between where the road bends and the fields start and someone is walking a dog you can't quite make out. That's where I seem to live now. Far enough from home that it's abstract. Close enough to here that it isn't mine yet."}},
+  {type:"Feature",geometry:{type:"Point",coordinates:[-90.4211,15.0654]},properties:{id:"market",place:"Mercado Central",title:"How a road gets named",date:"April 2",excerpt:"Back home I ran a whole policy for this. Here a road is named by whoever's lived on it longest, and the name is right because everyone agrees it is.",body:"Back home I wrote the standards for this — a whole resolution about how a road gets a name, who signs off, which font goes on the sign. Here a road is named by whoever has lived on it longest, and it's the correct name for exactly as long as everyone agrees it is. I keep reaching for the version of me that had authority over this. He's not useful here. It's a relief, mostly."}}
+]};
+
+function init(){
+  const map=new maplibregl.Map({
+    container:"map",
+    style:{version:8,sources:{osm:{type:"raster",tiles:["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],tileSize:256,attribution:"© OpenStreetMap contributors"}},layers:[{id:"osm",type:"raster",source:"osm"}]},
+    center:[-90.42,15.09],zoom:12
+  });
+  map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
+
+  const markers={};let activeId=null;
+  function setActive(id,{fly=true}={}){
+    if(activeId&&markers[activeId])markers[activeId].getElement().classList.remove("active");
+    document.querySelectorAll(".post").forEach(el=>el.classList.toggle("active",el.dataset.id===id));
+    activeId=id;const m=markers[id];
+    if(m){m.getElement().classList.add("active");if(fly)map.flyTo({center:m.getLngLat(),zoom:14,speed:.7});m.togglePopup();
+      Object.entries(markers).forEach(([k,mk])=>{if(k!==id&&mk.getPopup().isOpen())mk.togglePopup();});}
+    const card=document.querySelector('.post[data-id="'+id+'"]');if(card)card.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }
+  const list=document.getElementById("posts");
+  posts.features.forEach(f=>{
+    const p=f.properties;
+    const li=document.createElement("li");li.className="post";li.dataset.id=p.id;
+    li.innerHTML='<p class="place">'+p.place+'</p><h2>'+p.title+'</h2><span class="date">'+p.date+'</span><p class="excerpt">'+p.excerpt+'</p>';
+    li.addEventListener("click",()=>setActive(p.id));list.appendChild(li);
+    const el=document.createElement("div");el.className="pin";
+    const popup=new maplibregl.Popup({offset:18,closeButton:false}).setHTML('<h3>'+p.title+'</h3><span class="date">'+p.place+' · '+p.date+'</span><p>'+p.body+'</p>');
+    const marker=new maplibregl.Marker({element:el,anchor:"bottom"}).setLngLat(f.geometry.coordinates).setPopup(popup).addTo(map);
+    el.addEventListener("click",e=>{e.stopPropagation();setActive(p.id,{fly:false});});
+    markers[p.id]=marker;
+  });
+}
+if(window.maplibregl){init();}else{
+  document.getElementById("map").innerHTML='<p style="padding:24px;font-family:sans-serif;color:#6a6459">Map library still loading… if this persists, the map tiles/CDN are blocked in this preview but will work when hosted.</p>';
+  window.addEventListener("load",()=>{if(window.maplibregl)init();});
+}
+</script>
+</body>
+</html>
