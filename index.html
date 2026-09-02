@@ -80,6 +80,34 @@
     .welcome{font-size:17.5px}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* ---------- Entry view (opens to full poem + focused map) ---------- */
+  .entryview{position:fixed;inset:0;z-index:50;background:linear-gradient(180deg,#8fc4e8 0%,#bfe0f2 18%,#e4f1f4 40%,#fbfaf3 64%);
+    display:none;overflow-y:auto}
+  .entryview.open{display:block}
+  .ev-inner{display:grid;grid-template-columns:minmax(360px,1fr) 1.1fr;min-height:100vh}
+  .ev-read{padding:56px 56px 80px;max-width:640px}
+  .ev-back{display:inline-flex;align-items:center;gap:7px;background:none;border:0;font-family:inherit;font-size:14px;color:var(--ink-soft);cursor:pointer;padding:0;margin-bottom:36px}
+  .ev-back:hover{color:var(--ink)}
+  .ev-back::before{content:"←";font-size:16px}
+  .ev-meta{font-size:12.5px;letter-spacing:.04em;color:var(--ink-faint);margin:0 0 4px;font-weight:500}
+  .ev-place{color:var(--pc,var(--emerald));font-weight:600}
+  .ev-place::before{content:"◆ ";font-size:9px;vertical-align:1.5px}
+  .ev-coords{font-size:11.5px;color:var(--ink-faint);letter-spacing:.02em;margin:3px 0 0;font-variant-numeric:tabular-nums}
+  .ev-title{margin:18px 0 4px;font-size:34px;font-weight:700;line-height:1.08;letter-spacing:-.015em}
+  .ev-date{font-size:13.5px;font-style:italic;color:var(--ink-faint);margin:0 0 30px}
+  .poem-body{font-size:18.5px;line-height:1.6}
+  .poem-body .stanza{margin:0 0 24px;white-space:pre-line}
+  .poem-body .refrain{display:block;margin-top:4px;font-style:italic;color:var(--pc,var(--emerald))}
+  .ev-map{position:relative;background:#eae4d3}
+  #emap{position:absolute;inset:0}
+  @media (max-width:820px){
+    .ev-inner{grid-template-columns:1fr}
+    .ev-map{height:42vh;order:-1}
+    #emap{position:absolute;inset:0}
+    .ev-read{padding:32px 24px 60px}
+    .ev-title{font-size:28px}
+  }
 </style>
 </head>
 <body>
@@ -87,20 +115,34 @@
   <section class="splash">
     <!-- subtle topographic contours, drawn as SVG so they're crisp & intentional -->
     <svg class="contours" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <path d="M-50,120 C200,60 420,180 640,120 C860,60 1050,160 1260,110"/>
-      <path d="M-50,190 C220,130 430,250 650,190 C870,130 1060,230 1260,180"/>
-      <path class="c-emph" d="M-50,270 C240,210 450,330 670,270 C890,210 1080,300 1260,255"/>
-      <path d="M-50,350 C260,300 470,410 690,355 C900,300 1090,380 1260,340"/>
-      <path d="M-50,440 C250,390 480,500 700,445 C910,395 1100,470 1260,430"/>
-      <path class="c-emph" d="M-50,540 C240,495 470,600 700,545 C920,495 1110,565 1260,530"/>
-      <path d="M-50,630 C230,590 460,690 690,640 C910,595 1100,655 1260,625"/>
-      <path d="M-50,720 C220,685 450,775 680,730 C900,690 1090,745 1260,720"/>
-      <!-- a couple of closed contours, like summits -->
-      <ellipse cx="300" cy="330" rx="70" ry="34" transform="rotate(-8 300 330)"/>
-      <ellipse cx="300" cy="330" rx="42" ry="19" transform="rotate(-8 300 330)"/>
-      <ellipse cx="900" cy="470" rx="86" ry="40" transform="rotate(6 900 470)"/>
-      <ellipse cx="900" cy="470" rx="54" ry="24" transform="rotate(6 900 470)"/>
-      <ellipse cx="900" cy="470" rx="24" ry="10" transform="rotate(6 900 470)"/>
+      <defs>
+        <linearGradient id="relief" x1="0" y1="0" x2="0.5" y2="1">
+          <stop offset="0%" stop-color="rgba(31,61,46,0.05)"/>
+          <stop offset="100%" stop-color="rgba(31,61,46,0)"/>
+        </linearGradient>
+      </defs>
+      <!-- soft shaded-relief washes under the ridge systems -->
+      <path d="M-50,300 C240,230 470,360 700,300 C920,245 1090,320 1260,285 L1260,470 C1090,510 920,435 700,490 C470,550 240,420 -50,490 Z" fill="url(#relief)" stroke="none"/>
+      <path d="M-50,560 C230,520 470,620 720,570 C940,525 1110,585 1260,560 L1260,700 C1110,725 940,665 720,710 C470,760 230,660 -50,700 Z" fill="url(#relief)" stroke="none"/>
+
+      <!-- ridge system: a nested set of parallel contours following one landform -->
+      <path d="M-50,300 C240,230 470,360 700,300 C920,245 1090,320 1260,285"/>
+      <path d="M-50,330 C240,262 470,390 700,330 C920,276 1090,350 1260,316"/>
+      <path class="c-emph" d="M-50,362 C240,296 470,422 700,362 C920,309 1090,382 1260,349"/>
+      <path d="M-50,396 C240,332 470,456 700,396 C920,344 1090,416 1260,384"/>
+      <path d="M-50,432 C240,370 470,492 700,432 C920,381 1090,452 1260,421"/>
+      <path d="M-50,470 C240,410 470,530 700,470 C920,420 1090,490 1260,460"/>
+
+      <!-- valley/second ridge system lower down -->
+      <path d="M-50,560 C230,520 470,620 720,570 C940,525 1110,585 1260,560"/>
+      <path d="M-50,594 C230,556 470,652 720,604 C940,560 1110,618 1260,594"/>
+      <path class="c-emph" d="M-50,630 C230,594 470,686 720,640 C940,598 1110,654 1260,630"/>
+      <path d="M-50,668 C230,634 470,722 720,678 C940,638 1110,692 1260,668"/>
+      <path d="M-50,708 C230,676 470,760 720,718 C940,680 1110,732 1260,708"/>
+
+      <!-- upper faint contours (higher ground) -->
+      <path d="M-50,150 C240,96 470,206 700,150 C920,100 1090,166 1260,136"/>
+      <path d="M-50,186 C240,134 470,242 700,186 C920,138 1090,202 1260,174"/>
     </svg>
 
     <div class="inner">
@@ -121,7 +163,7 @@
 
   <section class="mapzone" aria-label="Map of all wanderings">
     <p class="mlabel">The whole wander</p>
-    <p class="msub">Every place, and the thread between them. Tap a pin to read what came there.</p>
+    <p class="msub">Every place, and the thread between them. Tap a pin to open what came there.</p>
     <div id="map" role="region" aria-label="Topographic map of all wandering locations"></div>
   </section>
 
@@ -132,24 +174,88 @@
       <p class="meta"><span class="place">Anderson Flats, BC</span> · late summer</p>
       <h2>Pale Remembrances</h2>
       <p>A poem from the Skeena — catching, holding a life dangling between us, and letting it go.</p>
-      <button class="seelink" data-focus="0">see on the map</button>
+      <button class="seelink" data-focus="0">read</button>
     </article>
 
     <article class="entry-stub" style="--pc:#e0a530">
       <p class="meta"><span class="place">Salamá, Guatemala</span> · coming soon</p>
       <h2>The town with no addresses</h2>
       <p>On navigating by memory instead of street number, where an address is a story you tell.</p>
-      <button class="seelink" data-focus="1">see on the map</button>
+      <button class="seelink" data-focus="1">read</button>
     </article>
   </section>
 
+  <div class="entryview" id="entryview" role="dialog" aria-modal="true" aria-label="Entry">
+    <div class="ev-inner">
+      <div class="ev-read">
+        <button class="ev-back" id="evBack">back to the wander</button>
+        <p class="ev-meta"><span class="ev-place" id="evPlace"></span></p>
+        <p class="ev-coords" id="evCoords"></p>
+        <h1 class="ev-title" id="evTitle"></h1>
+        <p class="ev-date" id="evDate"></p>
+        <div class="poem-body" id="evBody"></div>
+      </div>
+      <div class="ev-map"><div id="emap" role="region" aria-label="Map focused on this entry's place"></div></div>
+    </div>
+  </div>
+
 <script>
-/* Entries with real coordinates. This is the seed of the GeoJSON data model
-   (step 3 moves it to an external posts.geojson). Order = journey order. */
+/* Entries — seed of the GeoJSON data model (step: external file later).
+   Order = journey order. `body` holds the full entry (poem stanzas here). */
 const entries=[
-  {id:"anderson-flats",coordinates:[-127.669417,55.2435],place:"Anderson Flats, BC",title:"Pale Remembrances",color:"#3a7ca5"},
-  {id:"salama",coordinates:[-90.4211,15.0654],place:"Salamá, Guatemala",title:"The town with no addresses",color:"#e0a530"}
+  {id:"anderson-flats",coordinates:[-127.669417,55.2435],place:"Anderson Flats, BC",title:"Pale Remembrances",
+   date:"on the Skeena, late summer",coords:"55°14′36.6″N 127°40′09.9″W",color:"#3a7ca5",
+   stanzas:[
+     {t:"turquoise rushing,\nwithin millenia of connected disorder.",r:"I see the movement"},
+     {t:"This morning holds ambivalence,\na subtle smallness,\nconstructed by,\ncool, damp divine.",r:"I feel the magnitude"},
+     {t:"The fish are here,\nthe trees, the brush, the roses,\na single collective force.",r:"I play in the motion"},
+     {t:"From your world to mine,\nyour power pours into my desire\nfor entitled freedom",r:"I remark calmly to you"},
+     {t:"im obligated to let you go,\ngasping,\nlife dangling between us.",r:"I yield."},
+     {t:"on the sheen of river stones\nyou disappear into the malaise,\nleaving my soul alone,\nguilty and yearning.",r:"I trust in that moment"}
+   ]},
+  {id:"salama",coordinates:[-90.4211,15.0654],place:"Salamá, Guatemala",title:"The town with no addresses",
+   date:"coming soon",coords:"15°03′55″N 90°25′16″W",color:"#e0a530",stanzas:null}
 ];
+
+let emap=null;
+function buildEntryMap(e){
+  if(emap){emap.remove();emap=null;}
+  emap=new maplibregl.Map({
+    container:"emap",
+    style:{version:8,sources:{topo:{type:"raster",tiles:["https://a.tile.opentopomap.org/{z}/{x}/{y}.png","https://b.tile.opentopomap.org/{z}/{x}/{y}.png","https://c.tile.opentopomap.org/{z}/{x}/{y}.png"],tileSize:256,maxzoom:17,attribution:"© OpenTopoMap (CC-BY-SA) · © OpenStreetMap contributors"}},layers:[{id:"topo",type:"raster",source:"topo"}]},
+    center:e.coordinates,zoom:13,attributionControl:{compact:true}
+  });
+  emap.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
+  const el=document.createElement("div");el.className="pin here";el.style.setProperty("--pc",e.color);
+  el.innerHTML='<div class="dot"></div>';
+  new maplibregl.Marker({element:el,anchor:"center"}).setLngLat(e.coordinates).addTo(emap);
+}
+
+function openEntry(id){
+  const e=entries.find(x=>x.id===id);if(!e)return;
+  document.getElementById("evPlace").textContent=e.place;
+  document.getElementById("evCoords").textContent=e.coords;
+  document.getElementById("evTitle").textContent=e.title;
+  document.getElementById("evDate").textContent=e.date;
+  const body=document.getElementById("evBody");
+  document.querySelector("#entryview .ev-read").style.setProperty("--pc",e.color);
+  if(e.stanzas){
+    body.innerHTML=e.stanzas.map(s=>'<div class="stanza">'+s.t+'<span class="refrain">— '+s.r+'</span></div>').join("");
+  }else{
+    body.innerHTML='<p style="font-style:italic;color:#7c9184">This wandering hasn\u2019t been written yet. Soon.</p>';
+  }
+  const ev=document.getElementById("entryview");ev.classList.add("open");
+  document.body.style.overflow="hidden";
+  if(window.location.hash!=="#"+id)history.replaceState(null,"","#"+id);
+  setTimeout(()=>{buildEntryMap(e);},30);
+  document.getElementById("evBack").focus();
+}
+function closeEntry(){
+  document.getElementById("entryview").classList.remove("open");
+  document.body.style.overflow="";
+  if(emap){emap.remove();emap=null;}
+  history.replaceState(null,"",window.location.pathname+window.location.search);
+}
 
 function init(){
   const map=new maplibregl.Map({
@@ -164,40 +270,33 @@ function init(){
 
   const markers=[];
   map.on("load",()=>{
-    // journey thread — real GeoJSON line connecting entries in order
     map.addSource("thread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:entries.map(e=>e.coordinates)}}});
     map.addLayer({id:"thread",type:"line",source:"thread",paint:{"line-color":"#4a6353","line-width":2,"line-dasharray":[2,2],"line-opacity":.55}});
-    // fit to all entries
     const b=new maplibregl.LngLatBounds();entries.forEach(e=>b.extend(e.coordinates));
     map.fitBounds(b,{padding:70,maxZoom:6,duration:0});
   });
 
-  function focus(i){
-    markers.forEach((m,j)=>m.el.classList.toggle("here",j===i));
-    if(!reduce)map.easeTo({center:entries[i].coordinates,zoom:12,duration:900,easing:t=>t*(2-t)});
-    else map.setCenter(entries[i].coordinates);
-    document.getElementById("map").scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});
-  }
-
   entries.forEach((e,i)=>{
     const el=document.createElement("div");el.className="pin";el.style.setProperty("--pc",e.color);
     el.innerHTML='<div class="plabel">'+e.place+'</div><div class="dot"></div>';
-    el.setAttribute("role","button");el.setAttribute("aria-label",e.title+", "+e.place);el.tabIndex=0;
-    const m=new maplibregl.Marker({element:el,anchor:"center"}).setLngLat(e.coordinates).addTo(map);
-    const go=()=>{ // tap a pin -> scroll to its entry
-      const art=document.querySelectorAll(".entry-stub")[i];
-      markers.forEach((mk,j)=>mk.el.classList.toggle("here",j===i));
-      if(art)art.scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});
-    };
-    el.addEventListener("click",go);
-    el.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();go();}});
-    markers.push({el,marker:m});
+    el.setAttribute("role","button");el.setAttribute("aria-label","Open "+e.title+", "+e.place);el.tabIndex=0;
+    new maplibregl.Marker({element:el,anchor:"center"}).setLngLat(e.coordinates).addTo(map);
+    const open=()=>openEntry(e.id);
+    el.addEventListener("click",open);
+    el.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();open();}});
+    markers.push(el);
   });
 
-  // "see on the map" links -> focus that place
+  // entry list links + pins both open the entry view
   document.querySelectorAll(".seelink").forEach(btn=>{
-    btn.addEventListener("click",()=>focus(parseInt(btn.dataset.focus,10)));
+    btn.addEventListener("click",()=>openEntry(entries[parseInt(btn.dataset.focus,10)].id));
   });
+  document.getElementById("evBack").addEventListener("click",closeEntry);
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeEntry();});
+
+  // open directly if the URL already has an entry anchor (Substack deep-link)
+  const h=window.location.hash.replace("#","");
+  if(h&&entries.some(e=>e.id===h))setTimeout(()=>openEntry(h),200);
 }
 if(window.maplibregl){init();}else{
   document.getElementById("map").innerHTML='<p style="padding:24px;font-family:sans-serif;color:#4a6353">Map still loading… works once hosted if blocked in this preview.</p>';
