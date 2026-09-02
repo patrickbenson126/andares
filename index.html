@@ -15,114 +15,140 @@
     --sky:#8fc4e8;--haze:#bfe0f2;--cloud:#fbfaf3;
     --ink:#1f3d2e;--ink-soft:#4a6353;--ink-faint:#7c9184;
     --emerald:#2e7d5b;--sage:#6a9a5b;--marigold:#e0a530;--clay:#c96f3a;--coral:#d98e78;
-    --water:#3a7ca5;--line:rgba(31,61,46,.14);--pc:var(--water);
+    --line:rgba(31,61,46,.14);--contour:rgba(31,61,46,.10);
   }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
-  body{font-family:"Bitter",Georgia,serif;color:var(--ink);
-    background:linear-gradient(#8fc4e8 0%,#bfe0f2 22%,#e4f1f4 46%,#fbfaf3 72%);
-    background-attachment:fixed;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  html,body{margin:0}
+  body{
+    font-family:"Bitter",Georgia,serif;color:var(--ink);
+    background:linear-gradient(180deg,#8fc4e8 0%,#bfe0f2 20%,#e4f1f4 44%,#fbfaf3 70%,#fbfaf3 100%);
+    min-height:100vh;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
   a{color:inherit}
   :focus-visible{outline:2px solid var(--emerald);outline-offset:3px;border-radius:2px}
-  #app{display:grid;grid-template-columns:minmax(400px,540px) 1fr;height:100vh}
-  #feed{overflow-y:auto;position:relative;scroll-behavior:smooth}
-  #map{height:100vh;background:#eae4d3;position:relative}
 
-  .masthead{padding:44px 52px 20px}
-  .masthead .top{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-  .masthead h1{margin:0;font-size:38px;font-weight:700;line-height:1.05;letter-spacing:-.015em;white-space:nowrap}
-  .masthead h1 .gloss{font-weight:400;font-style:italic;font-size:23px;color:var(--emerald)}
-  .byline-photo{width:96px;height:64px;border-radius:8px;object-fit:cover;flex:none;box-shadow:0 3px 12px rgba(31,61,46,.22)}
-  .masthead .byline{margin:14px 0 0;font-size:15px;font-style:italic;color:var(--ink-soft)}
-  .rule{height:1px;background:var(--line);margin:0 52px}
+  /* ---------- SPLASH ---------- */
+  .splash{position:relative;min-height:86vh;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+  .contours{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+  .contours path{fill:none;stroke:var(--contour);stroke-width:1.2}
+  .contours .c-emph{stroke:rgba(46,125,91,.16);stroke-width:1.6}
+  .splash .inner{position:relative;z-index:1;max-width:660px;margin:0 auto;padding:6vh 32px;width:100%}
 
-  .entry{padding:34px 52px 20px}
-  .entry .meta{font-size:12.5px;letter-spacing:.04em;color:var(--ink-faint);margin:0 0 4px;font-weight:500}
-  .entry .place{color:var(--water);font-weight:600;font-size:15px}
-  .entry .place::before{content:"◆ ";font-size:10px;vertical-align:1.5px}
-  .entry .coords{font-size:11.5px;color:var(--ink-faint);letter-spacing:.02em;margin:3px 0 0;font-variant-numeric:tabular-nums}
-  .entry h2{margin:14px 0 6px;font-size:27px;font-weight:600;line-height:1.15;letter-spacing:-.01em}
-  .entry .date{font-size:13px;font-style:italic;color:var(--ink-faint);margin:0 0 8px}
+  .brandrow{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:30px}
+  .portrait{width:96px;height:96px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 0 0 4px var(--cloud),0 6px 20px rgba(31,61,46,.25)}
+  .brandrow .names h1{margin:0;font-size:clamp(38px,6vw,54px);font-weight:700;line-height:1;letter-spacing:-.02em}
+  .brandrow .names h1 .gloss{font-weight:400;font-style:italic;font-size:.46em;color:var(--emerald)}
+  .brandrow .names .byline{margin:8px 0 0;font-size:15px;font-style:italic;color:var(--ink-soft)}
 
-  .viewtoggle{display:flex;gap:0;margin:18px 0 8px;border:1px solid var(--line);border-radius:6px;overflow:hidden;width:fit-content}
-  .viewtoggle button{font-family:inherit;font-size:13px;padding:7px 15px;background:transparent;border:0;cursor:pointer;color:var(--ink-soft);transition:background .18s}
-  .viewtoggle button.on{background:var(--water);color:#fff}
+  .welcome{font-size:19px;line-height:1.74;color:var(--ink);max-width:600px}
+  .welcome em{font-style:italic}
+  .welcome .vamos{color:var(--emerald);font-weight:600;font-style:italic}
+  .coord-tag{margin-top:26px;font-size:12px;letter-spacing:.06em;color:var(--ink-faint);font-variant-numeric:tabular-nums}
 
-  .poem{padding:10px 52px 60px;font-size:18px;line-height:1.62}
-  .stanza{margin:0 0 26px;padding:6px 0 6px 18px;border-left:3px solid transparent;transition:border-color .3s ease,opacity .3s ease;cursor:default}
-  .poem.distributed .stanza{cursor:pointer;opacity:.55}
-  .poem.distributed .stanza:hover{opacity:.85}
-  .poem.distributed .stanza.here{opacity:1;border-left-color:var(--water)}
-  .stanza .lines{white-space:pre-line}
-  .stanza .refrain{display:block;margin-top:6px;font-style:italic;color:var(--water);font-size:16px}
-  .stanza .snum{display:none}
-  .poem.distributed .snum{display:inline-block;font-size:11px;color:var(--ink-faint);font-style:normal;margin-right:8px;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:50%;width:20px;height:20px;line-height:19px;text-align:center;vertical-align:2px}
+  .scroll-cue{position:absolute;bottom:22px;left:0;right:0;text-align:center;color:var(--ink-faint);font-size:13px;font-style:italic;letter-spacing:.04em;z-index:1}
+  .scroll-cue .arrow{display:block;margin:8px auto 0;width:18px;height:18px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(45deg);opacity:.55}
 
-  /* map bits */
+  /* ---------- WANDERINGS (peek) ---------- */
+  .wanderings{max-width:660px;margin:0 auto;padding:6vh 32px 16vh}
+  .section-head{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--emerald);font-weight:600;margin:0 0 20px}
+  .entry-stub{padding:26px 0;border-top:1px solid var(--line)}
+  .entry-stub .meta{font-size:12.5px;letter-spacing:.04em;color:var(--ink-faint);margin:0 0 8px;font-weight:500}
+  .entry-stub .place{color:var(--clay);font-weight:600}
+  .entry-stub .place::before{content:"◆ ";font-size:9px;vertical-align:1.5px}
+  .entry-stub h2{margin:0 0 8px;font-size:23px;font-weight:600;line-height:1.18}
+  .entry-stub p{margin:0;font-size:16px;line-height:1.6;color:var(--ink-soft)}
+  .entry-stub .seelink{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:14px;font-style:italic;color:var(--pc,var(--emerald));font-weight:500;background:none;border:0;padding:0;cursor:pointer;font-family:inherit;border-bottom:1px solid transparent}
+  .entry-stub .seelink:hover{border-bottom-color:currentColor}
+  .entry-stub .seelink::before{content:"◆";font-size:9px}
+
+  /* ---------- Shared map section ---------- */
+  .mapzone{max-width:1080px;margin:0 auto;padding:2vh 24px 4vh}
+  .mapzone .mlabel{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--emerald);font-weight:600;margin:0 0 4px}
+  .mapzone .msub{margin:0 0 18px;font-size:14.5px;font-style:italic;color:var(--ink-soft)}
+  #map{height:min(64vh,560px);border-radius:12px;overflow:hidden;background:#eae4d3;box-shadow:0 10px 40px rgba(31,61,46,.18);border:1px solid var(--line)}
   .maplibregl-ctrl-attrib{font-size:10px;background:rgba(251,250,243,.85)!important;font-family:system-ui,sans-serif}
   .maplibregl-ctrl-group{background:var(--cloud);border:1px solid var(--line)!important;box-shadow:none!important}
   .pin{cursor:pointer;transition:transform .18s ease}
-  .pin .dot{width:15px;height:15px;border-radius:50%;background:var(--water);border:2.5px solid var(--cloud);box-shadow:0 0 0 1px rgba(31,61,46,.3),0 2px 6px rgba(0,0,0,.4)}
-  .pin.sm .dot{width:11px;height:11px}
-  .pin:hover{transform:scale(1.25)}
-  .pin.here .dot{box-shadow:0 0 0 8px rgba(58,124,165,.22),0 0 0 1px var(--water),0 2px 6px rgba(0,0,0,.4)}
+  .pin .dot{width:15px;height:15px;border-radius:50%;background:var(--pc,var(--emerald));border:2.5px solid var(--cloud);box-shadow:0 0 0 1px rgba(31,61,46,.3),0 2px 6px rgba(0,0,0,.38)}
+  .pin:hover{transform:scale(1.26)}
+  .pin.here .dot{box-shadow:0 0 0 8px color-mix(in srgb,var(--pc,var(--emerald)) 20%,transparent),0 0 0 1px var(--pc,var(--emerald)),0 2px 6px rgba(0,0,0,.38)}
   .pin .plabel{position:absolute;left:50%;top:-9px;transform:translate(-50%,-100%);white-space:nowrap;font-family:"Bitter",serif;font-size:12px;font-weight:600;color:var(--ink);background:rgba(251,250,243,.94);padding:3px 9px;border-radius:3px;border:1px solid var(--line);box-shadow:0 3px 10px rgba(31,61,46,.18);opacity:0;transition:opacity .18s;pointer-events:none}
   .pin.here .plabel,.pin:hover .plabel{opacity:1}
 
-  @media (max-width:820px){
-    #app{display:block;height:auto}
-    #map{height:42vh;position:sticky;top:0;z-index:1;border-bottom:1px solid var(--line)}
-    #feed{overflow:visible;height:auto}
-    .masthead{padding:26px 22px 14px}.masthead h1{font-size:30px}.masthead h1 .gloss{font-size:19px}
-    .byline-photo{width:80px;height:54px}
-    .rule{margin:0 22px}.entry{padding:26px 22px 14px}.poem{padding:6px 22px 40px}
+  @media (max-width:560px){
+    .brandrow{gap:16px}.portrait{width:76px;height:76px}
+    .welcome{font-size:17.5px}
   }
-  @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<div id="app">
-  <div id="feed">
-    <header class="masthead">
-      <div class="top">
-        <h1>Andares <span class="gloss">(wandering)</span></h1>
-        <img class="byline-photo" src="pat.jpg" alt="Pat outdoors, mountains and water behind him">
-      </div>
-      <p class="byline">with Pat</p>
-    </header>
-    <div class="rule"></div>
 
-    <div class="entry">
-      <p class="meta"><span class="place">Anderson Flats Provincial Park</span></p>
-      <p class="coords">near South Hazelton, BC · 55°14′36.6″N 127°40′09.9″W</p>
-      <h2>I yield</h2>
-      <p class="date">on the Skeena, late summer</p>
+  <section class="splash">
+    <!-- subtle topographic contours, drawn as SVG so they're crisp & intentional -->
+    <svg class="contours" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <path d="M-50,120 C200,60 420,180 640,120 C860,60 1050,160 1260,110"/>
+      <path d="M-50,190 C220,130 430,250 650,190 C870,130 1060,230 1260,180"/>
+      <path class="c-emph" d="M-50,270 C240,210 450,330 670,270 C890,210 1080,300 1260,255"/>
+      <path d="M-50,350 C260,300 470,410 690,355 C900,300 1090,380 1260,340"/>
+      <path d="M-50,440 C250,390 480,500 700,445 C910,395 1100,470 1260,430"/>
+      <path class="c-emph" d="M-50,540 C240,495 470,600 700,545 C920,495 1110,565 1260,530"/>
+      <path d="M-50,630 C230,590 460,690 690,640 C910,595 1100,655 1260,625"/>
+      <path d="M-50,720 C220,685 450,775 680,730 C900,690 1090,745 1260,720"/>
+      <!-- a couple of closed contours, like summits -->
+      <ellipse cx="300" cy="330" rx="70" ry="34" transform="rotate(-8 300 330)"/>
+      <ellipse cx="300" cy="330" rx="42" ry="19" transform="rotate(-8 300 330)"/>
+      <ellipse cx="900" cy="470" rx="86" ry="40" transform="rotate(6 900 470)"/>
+      <ellipse cx="900" cy="470" rx="54" ry="24" transform="rotate(6 900 470)"/>
+      <ellipse cx="900" cy="470" rx="24" ry="10" transform="rotate(6 900 470)"/>
+    </svg>
 
-      <div class="viewtoggle" role="tablist" aria-label="How to read this poem">
-        <button id="btn-whole" class="on" role="tab" aria-selected="true">Whole, at one place</button>
-        <button id="btn-dist" role="tab" aria-selected="false">Distributed</button>
+    <div class="inner">
+      <div class="brandrow">
+        <img class="portrait" src="pat.jpg" alt="Pat outdoors, with mountains and water behind him">
+        <div class="names">
+          <h1>Andares <span class="gloss">(wandering)</span></h1>
+          <p class="byline">with Pat</p>
+        </div>
       </div>
+
+      <div class="welcome">
+        My friend, thank you for being here. <em>Andares</em> means wandering, and that's all this is. I've been a <em>map guy</em> for so long. Now getting lost, in a place, an emotion, an experience, is the work. This is a mashup of those worlds: letting go of the path (whatever that is), still noticing all the beauty and vibrancy around me, and sharing it with you! <span class="vamos">¿Vamos?</span>
+      </div>
+      <p class="coord-tag">◆ now wandering · 15.09° N, 90.42° W · Guatemala</p>
     </div>
+  </section>
 
-    <div class="poem" id="poem"></div>
-  </div>
-  <div id="map" role="region" aria-label="Topographic map of Anderson Flats"></div>
-</div>
+  <section class="mapzone" aria-label="Map of all wanderings">
+    <p class="mlabel">The whole wander</p>
+    <p class="msub">Every place, and the thread between them. Tap a pin to read what came there.</p>
+    <div id="map" role="region" aria-label="Topographic map of all wandering locations"></div>
+  </section>
+
+  <section class="wanderings" aria-label="Wanderings">
+    <p class="section-head">Wanderings</p>
+
+    <article class="entry-stub" style="--pc:#3a7ca5">
+      <p class="meta"><span class="place">Anderson Flats, BC</span> · late summer</p>
+      <h2>Pale Remembrances</h2>
+      <p>A poem from the Skeena — catching, holding a life dangling between us, and letting it go.</p>
+      <button class="seelink" data-focus="0">see on the map</button>
+    </article>
+
+    <article class="entry-stub" style="--pc:#e0a530">
+      <p class="meta"><span class="place">Salamá, Guatemala</span> · coming soon</p>
+      <h2>The town with no addresses</h2>
+      <p>On navigating by memory instead of street number, where an address is a story you tell.</p>
+      <button class="seelink" data-focus="1">see on the map</button>
+    </article>
+  </section>
 
 <script>
-const CENTER=[-127.669417,55.2435];
-// The poem. In "distributed" mode each stanza gets a point tracing the poem's
-// movement within this place — river, air, water, the far bank, the stones.
-// (Honest: all near Anderson Flats — this demos the distributed *model*, since
-//  the poem came from one place. A truly multi-location piece would carry real
-//  coordinates per stanza here instead.)
-const stanzas=[
-  {lines:"turquoise rushing,\nwithin millenia of connected disorder.",refrain:"I see the movement",offset:[-0.004,0.0016]},
-  {lines:"This morning holds ambivalence,\na subtle smallness,\nconstructed by,\ncool, damp divine.",refrain:"I feel the magnitude",offset:[-0.0018,0.0028]},
-  {lines:"The fish are here,\nthe trees, the brush, the roses,\na single collective force.",refrain:"I play in the motion",offset:[0.0012,0.0009]},
-  {lines:"From your world to mine,\nyour power pours into my desire\nfor entitled freedom",refrain:"I remark calmly to you",offset:[0.0026,-0.0006]},
-  {lines:"im obligated to let you go,\ngasping,\nlife dangling between us.",refrain:"I yield.",offset:[0.0009,-0.0022]},
-  {lines:"on the sheen of river stones\nyou disappear into the malaise,\nleaving my soul alone,\nguilty and yearning.",refrain:"I trust in that moment",offset:[-0.0016,-0.0034]}
+/* Entries with real coordinates. This is the seed of the GeoJSON data model
+   (step 3 moves it to an external posts.geojson). Order = journey order. */
+const entries=[
+  {id:"anderson-flats",coordinates:[-127.669417,55.2435],place:"Anderson Flats, BC",title:"Pale Remembrances",color:"#3a7ca5"},
+  {id:"salama",coordinates:[-90.4211,15.0654],place:"Salamá, Guatemala",title:"The town with no addresses",color:"#e0a530"}
 ];
 
 function init(){
@@ -131,85 +157,53 @@ function init(){
     style:{version:8,
       sources:{topo:{type:"raster",tiles:["https://a.tile.opentopomap.org/{z}/{x}/{y}.png","https://b.tile.opentopomap.org/{z}/{x}/{y}.png","https://c.tile.opentopomap.org/{z}/{x}/{y}.png"],tileSize:256,maxzoom:17,attribution:"© OpenTopoMap (CC-BY-SA) · © OpenStreetMap contributors"}},
       layers:[{id:"topo",type:"raster",source:"topo"}]},
-    center:CENTER,zoom:13,attributionControl:{compact:true}
+    center:[-108,35],zoom:2,attributionControl:{compact:true}
   });
   map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
   const reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
 
-  const pts=stanzas.map(s=>[CENTER[0]+s.offset[0],CENTER[1]+s.offset[1]]);
-
-  // GeoJSON: the poem's movement as a real line layer (the "thread")
+  const markers=[];
   map.on("load",()=>{
-    map.addSource("thread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:pts}}});
-    map.addLayer({id:"thread-line",type:"line",source:"thread",
-      paint:{"line-color":"#3a7ca5","line-width":2.5,"line-dasharray":[2,1.5],"line-opacity":0}});
-  });
-  function setThread(on){if(map.getLayer("thread-line"))map.setPaintProperty("thread-line","line-opacity",on?0.85:0);}
-
-  // one big pin (whole mode) + six small pins (distributed mode)
-  const bigEl=document.createElement("div");bigEl.className="pin";
-  bigEl.innerHTML='<div class="plabel">Anderson Flats</div><div class="dot"></div>';
-  bigEl.setAttribute("role","button");bigEl.setAttribute("aria-label","Anderson Flats");bigEl.tabIndex=0;
-  const bigMarker=new maplibregl.Marker({element:bigEl,anchor:"center"}).setLngLat(CENTER).addTo(map);
-
-  const stanzaMarkers=stanzas.map((s,i)=>{
-    const el=document.createElement("div");el.className="pin sm";
-    el.innerHTML='<div class="plabel">'+(i+1)+'. '+s.refrain+'</div><div class="dot"></div>';
-    el.setAttribute("role","button");el.setAttribute("aria-label","Stanza "+(i+1)+": "+s.refrain);el.tabIndex=0;
-    const m=new maplibregl.Marker({element:el,anchor:"center"}).setLngLat(pts[i]);
-    const focus=()=>focusStanza(i);
-    el.addEventListener("click",e=>{e.stopPropagation();focus();});
-    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();focus();}});
-    return {el,m};
+    // journey thread — real GeoJSON line connecting entries in order
+    map.addSource("thread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:entries.map(e=>e.coordinates)}}});
+    map.addLayer({id:"thread",type:"line",source:"thread",paint:{"line-color":"#4a6353","line-width":2,"line-dasharray":[2,2],"line-opacity":.55}});
+    // fit to all entries
+    const b=new maplibregl.LngLatBounds();entries.forEach(e=>b.extend(e.coordinates));
+    map.fitBounds(b,{padding:70,maxZoom:6,duration:0});
   });
 
-  const poemEl=document.getElementById("poem");
-  stanzas.forEach((s,i)=>{
-    const d=document.createElement("div");d.className="stanza";d.dataset.i=i;
-    d.innerHTML='<span class="snum">'+(i+1)+'</span><span class="lines">'+s.lines+'</span><span class="refrain">— '+s.refrain+'</span>';
-    d.addEventListener("click",()=>{if(poemEl.classList.contains("distributed"))focusStanza(i);});
-    poemEl.appendChild(d);
+  function focus(i){
+    markers.forEach((m,j)=>m.el.classList.toggle("here",j===i));
+    if(!reduce)map.easeTo({center:entries[i].coordinates,zoom:12,duration:900,easing:t=>t*(2-t)});
+    else map.setCenter(entries[i].coordinates);
+    document.getElementById("map").scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});
+  }
+
+  entries.forEach((e,i)=>{
+    const el=document.createElement("div");el.className="pin";el.style.setProperty("--pc",e.color);
+    el.innerHTML='<div class="plabel">'+e.place+'</div><div class="dot"></div>';
+    el.setAttribute("role","button");el.setAttribute("aria-label",e.title+", "+e.place);el.tabIndex=0;
+    const m=new maplibregl.Marker({element:el,anchor:"center"}).setLngLat(e.coordinates).addTo(map);
+    const go=()=>{ // tap a pin -> scroll to its entry
+      const art=document.querySelectorAll(".entry-stub")[i];
+      markers.forEach((mk,j)=>mk.el.classList.toggle("here",j===i));
+      if(art)art.scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});
+    };
+    el.addEventListener("click",go);
+    el.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();go();}});
+    markers.push({el,marker:m});
   });
 
-  function focusStanza(i){
-    document.querySelectorAll(".stanza").forEach((el,j)=>el.classList.toggle("here",j===i));
-    stanzaMarkers.forEach((sm,j)=>sm.el.classList.toggle("here",j===i));
-    if(!reduce)map.easeTo({center:pts[i],zoom:14.5,duration:650,easing:t=>t*(2-t)});
-    else map.setCenter(pts[i]);
-    const st=document.querySelector('.stanza[data-i="'+i+'"]');if(st)st.scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});
-  }
-
-  // view switching
-  const btnWhole=document.getElementById("btn-whole"),btnDist=document.getElementById("btn-dist");
-  function whole(){
-    poemEl.classList.remove("distributed");
-    btnWhole.classList.add("on");btnDist.classList.remove("on");
-    btnWhole.setAttribute("aria-selected","true");btnDist.setAttribute("aria-selected","false");
-    stanzaMarkers.forEach(sm=>sm.m.remove());
-    bigMarker.addTo(map);bigEl.classList.add("here");
-    setThread(false);
-    document.querySelectorAll(".stanza").forEach(el=>el.classList.remove("here"));
-    if(!reduce)map.easeTo({center:CENTER,zoom:13,duration:650,easing:t=>t*(2-t)});else map.setCenter(CENTER);
-  }
-  function distributed(){
-    poemEl.classList.add("distributed");
-    btnDist.classList.add("on");btnWhole.classList.remove("on");
-    btnDist.setAttribute("aria-selected","true");btnWhole.setAttribute("aria-selected","false");
-    bigMarker.remove();
-    stanzaMarkers.forEach(sm=>sm.m.addTo(map));
-    setThread(true);
-    const b=new maplibregl.LngLatBounds();pts.forEach(p=>b.extend(p));map.fitBounds(b,{padding:80,maxZoom:14,duration:reduce?0:650});
-    focusStanza(0);
-  }
-  btnWhole.addEventListener("click",whole);
-  btnDist.addEventListener("click",distributed);
-
-  whole(); // start in whole mode
+  // "see on the map" links -> focus that place
+  document.querySelectorAll(".seelink").forEach(btn=>{
+    btn.addEventListener("click",()=>focus(parseInt(btn.dataset.focus,10)));
+  });
 }
 if(window.maplibregl){init();}else{
-  document.getElementById("map").innerHTML='<p style="padding:24px;font-family:sans-serif;color:#4a6353">Map still loading… works once hosted if blocked here.</p>';
+  document.getElementById("map").innerHTML='<p style="padding:24px;font-family:sans-serif;color:#4a6353">Map still loading… works once hosted if blocked in this preview.</p>';
   window.addEventListener("load",()=>{if(window.maplibregl)init();});
 }
 </script>
+
 </body>
 </html>
