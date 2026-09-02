@@ -29,9 +29,8 @@
 
   /* ---------- SPLASH ---------- */
   .splash{position:relative;min-height:86vh;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
-  .contours{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
-  .contours path{fill:none;stroke:var(--contour);stroke-width:1.2}
-  .contours .c-emph{stroke:rgba(46,125,91,.16);stroke-width:1.6}
+  .contours{position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:url('contours.png');background-size:cover;background-position:center 30%;opacity:.8}
   .splash .inner{position:relative;z-index:1;max-width:660px;margin:0 auto;padding:6vh 32px;width:100%}
 
   .brandrow{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:30px}
@@ -114,36 +113,7 @@
 
   <section class="splash">
     <!-- subtle topographic contours, drawn as SVG so they're crisp & intentional -->
-    <svg class="contours" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs>
-        <linearGradient id="relief" x1="0" y1="0" x2="0.5" y2="1">
-          <stop offset="0%" stop-color="rgba(31,61,46,0.05)"/>
-          <stop offset="100%" stop-color="rgba(31,61,46,0)"/>
-        </linearGradient>
-      </defs>
-      <!-- soft shaded-relief washes under the ridge systems -->
-      <path d="M-50,300 C240,230 470,360 700,300 C920,245 1090,320 1260,285 L1260,470 C1090,510 920,435 700,490 C470,550 240,420 -50,490 Z" fill="url(#relief)" stroke="none"/>
-      <path d="M-50,560 C230,520 470,620 720,570 C940,525 1110,585 1260,560 L1260,700 C1110,725 940,665 720,710 C470,760 230,660 -50,700 Z" fill="url(#relief)" stroke="none"/>
-
-      <!-- ridge system: a nested set of parallel contours following one landform -->
-      <path d="M-50,300 C240,230 470,360 700,300 C920,245 1090,320 1260,285"/>
-      <path d="M-50,330 C240,262 470,390 700,330 C920,276 1090,350 1260,316"/>
-      <path class="c-emph" d="M-50,362 C240,296 470,422 700,362 C920,309 1090,382 1260,349"/>
-      <path d="M-50,396 C240,332 470,456 700,396 C920,344 1090,416 1260,384"/>
-      <path d="M-50,432 C240,370 470,492 700,432 C920,381 1090,452 1260,421"/>
-      <path d="M-50,470 C240,410 470,530 700,470 C920,420 1090,490 1260,460"/>
-
-      <!-- valley/second ridge system lower down -->
-      <path d="M-50,560 C230,520 470,620 720,570 C940,525 1110,585 1260,560"/>
-      <path d="M-50,594 C230,556 470,652 720,604 C940,560 1110,618 1260,594"/>
-      <path class="c-emph" d="M-50,630 C230,594 470,686 720,640 C940,598 1110,654 1260,630"/>
-      <path d="M-50,668 C230,634 470,722 720,678 C940,638 1110,692 1260,668"/>
-      <path d="M-50,708 C230,676 470,760 720,718 C940,680 1110,732 1260,708"/>
-
-      <!-- upper faint contours (higher ground) -->
-      <path d="M-50,150 C240,96 470,206 700,150 C920,100 1090,166 1260,136"/>
-      <path d="M-50,186 C240,134 470,242 700,186 C920,138 1090,202 1260,174"/>
-    </svg>
+    <div class="contours" aria-hidden="true"></div>
 
     <div class="inner">
       <div class="brandrow">
