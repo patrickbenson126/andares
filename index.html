@@ -103,8 +103,9 @@
   .ev-title{margin:18px 0 4px;font-size:34px;font-weight:700;line-height:1.08;letter-spacing:-.015em}
   .ev-date{font-size:13.5px;font-style:italic;color:var(--ink-faint);margin:0 0 30px}
   .poem-body{font-size:18.5px;line-height:1.6}
-  .poem-body .stanza{margin:0 0 24px;white-space:pre-line}
+  .poem-body .stanza{margin:0 0 24px}
   .poem-body .refrain{display:block;margin-top:4px;font-style:italic;color:var(--pc,var(--emerald))}
+  .poem-body p{margin:0 0 1.1em;font-size:17px;line-height:1.7}
   .ev-map{position:relative;background:#eae4d3}
   .ev-switch{position:absolute;top:14px;left:14px;z-index:5;margin:0;padding:6px;
     background:rgba(251,250,243,.82);border-radius:22px;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);box-shadow:0 3px 12px rgba(31,61,46,.18)}
@@ -161,22 +162,9 @@
     <div id="map" role="region" aria-label="Topographic map of all wandering locations"></div>
   </section>
 
-  <section class="wanderings" aria-label="Wanderings">
+  <section class="wanderings" aria-label="Noticings">
     <p class="section-head">Noticings</p>
-
-    <article class="entry-stub" style="--pc:#3a7ca5">
-      <p class="meta"><span class="place">Anderson Flats, BC</span> · late summer</p>
-      <h2>Pale Remembrances</h2>
-      <p>A poem from the Skeena — catching, holding a life dangling between us, and letting it go.</p>
-      <button class="seelink" data-focus="0">read</button>
-    </article>
-
-    <article class="entry-stub" style="--pc:#e0a530">
-      <p class="meta"><span class="place">Salamá, Guatemala</span> · coming soon</p>
-      <h2>The town with no addresses</h2>
-      <p>On navigating by memory instead of street number, where an address is a story you tell.</p>
-      <button class="seelink" data-focus="1">read</button>
-    </article>
+    <div id="entryList"></div>
   </section>
 
   <div class="entryview" id="entryview" role="dialog" aria-modal="true" aria-label="Entry">
@@ -216,22 +204,40 @@ function MT_STYLE(){return "https://api.maptiler.com/maps/"+MT_STYLES[MT_CURRENT
 function localStorage_getSafe(k){try{return window.localStorage.getItem(k);}catch(e){return null;}}
 function localStorage_setSafe(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
 
-/* Entries — seed of the GeoJSON data model (step: external file later).
-   Order = journey order. `body` holds the full entry (poem stanzas here). */
-const entries=[
-  {id:"anderson-flats",coordinates:[-127.669417,55.2435],place:"Anderson Flats, BC",title:"Pale Remembrances",
-   date:"on the Skeena, late summer",coords:"55°14′36.6″N 127°40′09.9″W",color:"#3a7ca5",
-   stanzas:[
-     {t:"turquoise rushing,\nwithin millenia of connected disorder.",r:"I see the movement"},
-     {t:"This morning holds ambivalence,\na subtle smallness,\nconstructed by,\ncool, damp divine.",r:"I feel the magnitude"},
-     {t:"The fish are here,\nthe trees, the brush, the roses,\na single collective force.",r:"I play in the motion"},
-     {t:"From your world to mine,\nyour power pours into my desire\nfor entitled freedom",r:"I remark calmly to you"},
-     {t:"im obligated to let you go,\ngasping,\nlife dangling between us.",r:"I yield."},
-     {t:"on the sheen of river stones\nyou disappear into the malaise,\nleaving my soul alone,\nguilty and yearning.",r:"I trust in that moment"}
-   ]},
-  {id:"salama",coordinates:[-90.4211,15.0654],place:"Salamá, Guatemala",title:"The town with no addresses",
-   date:"coming soon",coords:"15°03′55″N 90°25′16″W",color:"#e0a530",stanzas:null}
-];
+/* Entries are loaded from entries.geojson (a real spatial data file).
+   `entries` fills in at load; `routeOverride` holds an optional real route line. */
+let entries=[];
+let routeOverride=null;
+
+function loadEntries(){
+  return fetch("entries.geojson",{cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("geojson "+r.status);return r.json();})
+    .then(gj=>{
+      const pts=[];
+      (gj.features||[]).forEach(f=>{
+        const p=f.properties||{};
+        const g=f.geometry||{};
+        if(g.type==="Point"){
+          pts.push({
+            id:p.id, place:p.place, title:p.title, date:p.date, coords:p.coords,
+            color:p.color, order:(typeof p.order==="number"?p.order:9999),
+            coordinates:g.coordinates,
+            stanzas:Array.isArray(p.stanzas)?p.stanzas:null,
+            body:(typeof p.body==="string"?p.body:""),
+            teaser:(typeof p.teaser==="string"?p.teaser:"")
+          });
+        } else if(g.type==="LineString" && p.role==="route"){
+          routeOverride=g.coordinates;
+        }
+      });
+      pts.sort((a,b)=>a.order-b.order);       // thread/order by 'order'
+      entries=pts;
+      return entries;
+    });
+}
+/* thread geometry: explicit route if provided, else through points in order */
+function threadCoords(){return routeOverride||entries.map(e=>e.coordinates);}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");}
 
 let emap=null;
 function buildEntryMap(e){
@@ -246,7 +252,7 @@ function buildEntryMap(e){
   const dark=(MT_CURRENT==="satellite"||MT_CURRENT==="hybrid");
   emap.on("style.load",()=>{
     if(!emap.getSource("ethread")){
-      emap.addSource("ethread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:entries.map(x=>x.coordinates)}}});
+      emap.addSource("ethread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:threadCoords()}}});
       emap.addLayer({id:"ethread",type:"line",source:"ethread",paint:{"line-color":dark?"#ffffff":"#4a6353","line-width":2,"line-dasharray":[2,2],"line-opacity":dark?.9:.5}});
     }
   });
@@ -286,10 +292,15 @@ function openEntry(id){
   document.getElementById("evDate").textContent=e.date;
   const body=document.getElementById("evBody");
   document.querySelector("#entryview .ev-read").style.setProperty("--pc",e.color);
-  if(e.stanzas){
-    body.innerHTML=e.stanzas.map(s=>'<div class="stanza">'+s.t+'<span class="refrain">— '+s.r+'</span></div>').join("");
+  if(e.stanzas && e.stanzas.length){
+    body.innerHTML=e.stanzas.map(s=>'<div class="stanza">'+esc(s.t)+(s.r?'<span class="refrain">— '+esc(s.r)+'</span>':'')+'</div>').join("");
+  }else if(e.body && e.body.trim()){
+    body.innerHTML=e.body; // prose: already contains <p>…</p> from the composer
   }else{
     body.innerHTML='<p style="font-style:italic;color:#7c9184">Not written yet. Soon.</p>';
+  }
+  if(e.substack){
+    body.innerHTML+='<a class="substack" href="'+e.substack+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:18px;font-style:italic;color:var(--pc,var(--emerald));font-weight:500">a fuller piece on Substack →</a>';
   }
   const ev=document.getElementById("entryview");
   const wasOpen=ev.classList.contains("open");
@@ -307,7 +318,20 @@ function closeEntry(){
   history.replaceState(null,"",window.location.pathname+window.location.search);
 }
 
+function renderEntryList(){
+  const wrap=document.getElementById("entryList");
+  wrap.innerHTML=entries.map(e=>{
+    const c=e.color||"var(--emerald)";
+    const teaser=e.teaser?('<p>'+e.teaser+'</p>'):'';
+    return '<article class="entry-stub" style="--pc:'+c+'">'+
+      '<p class="meta"><span class="place">'+e.place+'</span> · '+e.date+'</p>'+
+      '<h2>'+e.title+'</h2>'+teaser+
+      '<button class="seelink" data-id="'+e.id+'">read</button></article>';
+  }).join("");
+}
+
 function init(){
+  renderEntryList();
   const map=new maplibregl.Map({
     container:"map",
     style:MT_STYLE(),
@@ -321,7 +345,7 @@ function init(){
   function addThread(){
     if(map.getSource("thread"))return;
     const dark=(MT_CURRENT==="satellite"||MT_CURRENT==="hybrid");
-    map.addSource("thread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:entries.map(e=>e.coordinates)}}});
+    map.addSource("thread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:threadCoords()}}});
     map.addLayer({id:"thread",type:"line",source:"thread",paint:{"line-color":dark?"#ffffff":"#4a6353","line-width":2,"line-dasharray":[2,2],"line-opacity":dark?.9:.55}});
   }
   let firstLoad=true;
@@ -357,9 +381,9 @@ function init(){
     });
   });
 
-  // entry list links + pins both open the entry view
+  // entry list "read" buttons open the entry view (by id)
   document.querySelectorAll(".seelink").forEach(btn=>{
-    btn.addEventListener("click",()=>openEntry(entries[parseInt(btn.dataset.focus,10)].id));
+    btn.addEventListener("click",()=>openEntry(btn.dataset.id));
   });
   document.getElementById("evBack").addEventListener("click",closeEntry);
   document.addEventListener("keydown",e=>{if(e.key==="Escape")closeEntry();});
@@ -368,9 +392,18 @@ function init(){
   const h=window.location.hash.replace("#","");
   if(h&&entries.some(e=>e.id===h))setTimeout(()=>openEntry(h),200);
 }
-if(window.maplibregl){init();}else{
+function boot(){
+  loadEntries().then(()=>{
+    init();
+  }).catch(err=>{
+    console.error("Could not load entries.geojson:",err);
+    const el=document.getElementById("entryList");
+    if(el)el.innerHTML='<p style="font-style:italic;color:#7c9184">Entries couldn\u2019t load. (If viewing locally, this needs to run on the live site.)</p>';
+  });
+}
+if(window.maplibregl){boot();}else{
   document.getElementById("map").innerHTML='<p style="padding:24px;font-family:sans-serif;color:#4a6353">Map still loading… works once hosted if blocked in this preview.</p>';
-  window.addEventListener("load",()=>{if(window.maplibregl)init();});
+  window.addEventListener("load",()=>{if(window.maplibregl)boot();});
 }
 </script>
 

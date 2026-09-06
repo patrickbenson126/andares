@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "_howto": [
+    "HOW TO ADD AN ENTRY:",
+    "Copy one of the point features below, paste it into the 'features' list,",
+    "and change the fields. Keep the commas between features.",
+    "",
+    "  geometry.coordinates : [longitude, latitude]  (note: LONG first, then LAT)",
+    "  properties.id        : short url-safe slug, e.g. 'lake-atitlan' (used in the link)",
+    "  properties.place     : the place name shown on the page",
+    "  properties.title     : the entry title",
+    "  properties.date      : any text, e.g. 'on the Skeena, late summer'",
+    "  properties.coords    : the pretty coordinate string shown on the page",
+    "  properties.color     : a word (emerald, marigold, clay, coral, sage, water) OR a hex like '#3a7ca5'",
+    "  properties.order     : a number; entries are threaded together in this order (lowest first)",
+    "  properties.stanzas   : the poem. A list of {t, r} pairs: t = the lines, r = the refrain.",
+    "                         For line breaks inside t, write \\n .",
+    "                         For a prose entry instead of a poem, use 'body' (a paragraph of text) and omit 'stanzas'.",
+    "",
+    "OPTIONAL — a real route line:",
+    "  To override the auto-drawn thread with a real path, add a feature with",
+    "  geometry.type 'LineString' and properties.role 'route'. Its coordinates are",
+    "  [[lng,lat],[lng,lat],...]. If no such feature exists, the thread auto-draws",
+    "  through the points in 'order'."
+  ],
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-127.669417, 55.2435] },
+      "properties": {
+        "id": "anderson-flats",
+        "place": "Anderson Flats, BC",
+        "title": "Pale Remembrances",
+        "date": "on the Skeena, late summer",
+        "coords": "55°14′36.6″N 127°40′09.9″W",
+        "color": "#3a7ca5",
+        "order": 1,
+        "teaser": "A poem from the Skeena — catching, holding a life dangling between us, and letting it go.",
+        "stanzas": [
+          { "t": "turquoise rushing,\nwithin millenia of connected disorder.", "r": "I see the movement" },
+          { "t": "This morning holds ambivalence,\na subtle smallness,\nconstructed by,\ncool, damp divine.", "r": "I feel the magnitude" },
+          { "t": "The fish are here,\nthe trees, the brush, the roses,\na single collective force.", "r": "I play in the motion" },
+          { "t": "From your world to mine,\nyour power pours into my desire\nfor entitled freedom", "r": "I remark calmly to you" },
+          { "t": "im obligated to let you go,\ngasping,\nlife dangling between us.", "r": "I yield." },
+          { "t": "on the sheen of river stones\nyou disappear into the malaise,\nleaving my soul alone,\nguilty and yearning.", "r": "I trust in that moment" }
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-90.4211, 15.0654] },
+      "properties": {
+        "id": "salama",
+        "place": "Salamá, Guatemala",
+        "title": "The town with no addresses",
+        "date": "coming soon",
+        "coords": "15°03′55″N 90°25′16″W",
+        "color": "#e0a530",
+        "order": 2,
+        "teaser": "On navigating by memory instead of street number, where an address is a story you tell.",
+        "body": ""
+      }
+    }
+  ]
+}

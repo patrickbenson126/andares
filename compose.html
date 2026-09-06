@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Andares — compose an entry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
+<style>
+  :root{--cloud:#fbfaf3;--ink:#1f3d2e;--ink-soft:#4a6353;--ink-faint:#7c9184;--emerald:#2e7d5b;--line:rgba(31,61,46,.16)}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Bitter",Georgia,serif;color:var(--ink);background:linear-gradient(180deg,#bfe0f2,#fbfaf3 60%);min-height:100vh;padding:32px 20px 80px}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-size:30px;font-weight:700;margin:0 0 4px}
+  h1 .g{font-weight:400;font-style:italic;color:var(--emerald);font-size:.65em}
+  .lead{color:var(--ink-soft);margin:0 0 24px;line-height:1.5;font-size:15px}
+  .card{background:rgba(251,250,243,.8);border:1px solid var(--line);border-radius:12px;padding:24px 26px;margin-bottom:18px}
+  label{display:block;font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink-soft);margin:14px 0 5px}
+  label:first-child{margin-top:0}
+  .hint{font-weight:400;font-style:italic;color:var(--ink-faint);font-size:12px}
+  input[type=text],textarea,select{width:100%;font-family:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink)}
+  textarea{line-height:1.5;resize:vertical}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:160px}
+  .typeswitch{display:flex;gap:8px;margin-bottom:4px}
+  .typeswitch button{flex:1;font-family:inherit;font-size:14px;padding:9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink-soft);cursor:pointer}
+  .typeswitch button.on{background:var(--emerald);color:#fff;border-color:var(--emerald)}
+  #locmap{height:280px;border-radius:10px;border:1px solid var(--line);margin-top:8px;background:#eae4d3}
+  .coordline{display:flex;gap:10px;align-items:center;margin-top:8px;font-size:13px;color:var(--ink-soft)}
+  .btn{font-family:inherit;font-size:15px;font-weight:600;padding:11px 20px;border-radius:8px;border:0;background:var(--emerald);color:#fff;cursor:pointer}
+  .btn.secondary{background:#fff;color:var(--emerald);border:1px solid var(--emerald)}
+  .out{width:100%;height:220px;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre;overflow:auto;background:#1f2b25;color:#d7e6dd;border-radius:10px;padding:14px;border:0}
+  .stanza-help{font-size:12px;color:var(--ink-faint);font-style:italic;margin-top:6px;line-height:1.5}
+  .steps{background:rgba(46,125,91,.08);border-radius:10px;padding:16px 18px;font-size:14px;line-height:1.6;color:var(--ink-soft)}
+  .steps b{color:var(--ink)}
+  .pill{display:inline-block;font-size:11px;background:var(--emerald);color:#fff;border-radius:20px;padding:2px 9px;margin-left:6px;vertical-align:2px}
+  .status{font-size:13px;color:var(--ink-faint);font-style:italic;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Compose an entry <span class="g">— Andares</span></h1>
+  <p class="lead">Fill this out, hit generate, and it produces the complete entries.geojson for you to commit. Nothing here saves on its own — it just writes the file so you don't have to touch the JSON by hand.</p>
+
+  <div class="card">
+    <label>Entry type</label>
+    <div class="typeswitch" id="typeswitch">
+      <button data-type="poem" class="on">Poem</button>
+      <button data-type="prose">Prose / essay</button>
+    </div>
+
+    <div class="row">
+      <div><label>Title</label><input type="text" id="f-title" placeholder="Pale Remembrances"></div>
+      <div><label>Place <span class="hint">(shown on the page)</span></label><input type="text" id="f-place" placeholder="Anderson Flats, BC"></div>
+    </div>
+    <div class="row">
+      <div><label>Date / caption <span class="hint">(any text)</span></label><input type="text" id="f-date" placeholder="on the Skeena, late summer"></div>
+      <div><label>Color <span class="hint">(word or hex)</span></label><input type="text" id="f-color" placeholder="water  (or #3a7ca5)"></div>
+    </div>
+    <label>Substack link <span class="hint">(optional — a fuller / photo piece over there)</span></label>
+    <input type="text" id="f-substack" placeholder="https://yourname.substack.com/p/...">
+  </div>
+
+  <div class="card">
+    <label>Location <span class="hint">(click the map, or type coordinates)</span></label>
+    <div id="locmap"></div>
+    <div class="coordline">
+      <div style="flex:1"><label>Longitude</label><input type="text" id="f-lng" placeholder="-127.669417"></div>
+      <div style="flex:1"><label>Latitude</label><input type="text" id="f-lat" placeholder="55.2435"></div>
+    </div>
+    <label>Pretty coordinates <span class="hint">(shown on the page — auto-filled, editable)</span></label>
+    <input type="text" id="f-coords" placeholder="55°14′36.6″N 127°40′09.9″W">
+  </div>
+
+  <div class="card">
+    <label id="body-label">The poem</label>
+    <textarea id="f-body" rows="12" placeholder="Type or paste here with normal line breaks."></textarea>
+    <div class="stanza-help" id="poem-help">
+      <b>Poem format:</b> separate stanzas with a blank line. To mark a refrain (the italic line under a stanza), start that line with a dash and space: <b>- I yield.</b>
+    </div>
+  </div>
+
+  <div class="card">
+    <button class="btn" id="gen">Generate entries.geojson</button>
+    <span class="status" id="status"></span>
+    <div id="result" style="display:none;margin-top:16px">
+      <textarea class="out" id="out" readonly></textarea>
+      <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn" id="copy">Copy</button>
+        <button class="btn secondary" id="download">Download file</button>
+      </div>
+      <div class="steps" style="margin-top:16px">
+        <b>To publish:</b><br>
+        1. Copy (or download) the file above.<br>
+        2. In your GitHub repo, open <b>entries.geojson</b> → edit → select all → paste (or upload the downloaded file to replace it).<br>
+        3. Commit. Your entry appears on the site in a minute.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PRESET={emerald:"#2e7d5b",marigold:"#e0a530",clay:"#c96f3a",coral:"#d98e78",sage:"#6a9a5b",water:"#3a7ca5",pine:"#1f3d2e"};
+let entryType="poem";
+let existing={type:"FeatureCollection",features:[]};
+let nextOrder=1;
+
+// load current entries so we emit a complete file
+fetch("entries.geojson",{cache:"no-store"}).then(r=>r.json()).then(gj=>{
+  existing=gj;
+  const orders=(gj.features||[]).map(f=>(f.properties&&f.properties.order)||0);
+  nextOrder=(orders.length?Math.max.apply(null,orders):0)+1;
+  document.getElementById("status").textContent="Loaded "+(gj.features||[]).filter(f=>f.geometry&&f.geometry.type==="Point").length+" existing entries.";
+}).catch(()=>{document.getElementById("status").textContent="(Couldn't load existing entries — will still generate a valid file with just this one.)";});
+
+// type switch
+document.querySelectorAll("#typeswitch button").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll("#typeswitch button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");entryType=b.dataset.type;
+    document.getElementById("body-label").textContent = entryType==="poem"?"The poem":"The writing";
+    document.getElementById("poem-help").style.display = entryType==="poem"?"block":"none";
+    document.getElementById("f-body").placeholder = entryType==="poem"
+      ? "Type or paste here with normal line breaks."
+      : "Type or paste your prose. Separate paragraphs with a blank line.";
+  };
+});
+
+// slug helper
+function slugify(s){return (s||"entry").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40)||"entry";}
+
+// DMS pretty-format from decimal
+function toDMS(dec,pos,neg){
+  const dir=dec>=0?pos:neg;dec=Math.abs(dec);
+  const d=Math.floor(dec),m=Math.floor((dec-d)*60),s=((dec-d-m/60)*3600);
+  return d+"°"+String(m).padStart(2,"0")+"′"+s.toFixed(1)+"″"+dir;
+}
+function refreshPretty(){
+  const lng=parseFloat(document.getElementById("f-lng").value),lat=parseFloat(document.getElementById("f-lat").value);
+  if(isFinite(lng)&&isFinite(lat)&&!document.getElementById("f-coords").dataset.touched){
+    document.getElementById("f-coords").value=toDMS(lat,"N","S")+" "+toDMS(lng,"E","W");
+  }
+}
+document.getElementById("f-coords").addEventListener("input",e=>{e.target.dataset.touched="1";});
+
+// map picker
+const lm=new maplibregl.Map({container:"locmap",style:{version:8,sources:{o:{type:"raster",tiles:["https://a.tile.opentopomap.org/{z}/{x}/{y}.png","https://b.tile.opentopomap.org/{z}/{x}/{y}.png","https://c.tile.opentopomap.org/{z}/{x}/{y}.png"],tileSize:256,attribution:"© OpenTopoMap · OSM"}},layers:[{id:"o",type:"raster",source:"o"}]},center:[-90,15],zoom:3});
+let pin=null;
+lm.on("click",e=>{
+  const {lng,lat}=e.lngLat;
+  document.getElementById("f-lng").value=lng.toFixed(6);
+  document.getElementById("f-lat").value=lat.toFixed(6);
+  document.getElementById("f-coords").dataset.touched="";
+  refreshPretty();
+  if(pin)pin.setLngLat([lng,lat]);else pin=new maplibregl.Marker({color:"#2e7d5b"}).setLngLat([lng,lat]).addTo(lm);
+});
+document.getElementById("f-lng").addEventListener("input",()=>{syncPinFromFields();refreshPretty();});
+document.getElementById("f-lat").addEventListener("input",()=>{syncPinFromFields();refreshPretty();});
+function syncPinFromFields(){
+  const lng=parseFloat(document.getElementById("f-lng").value),lat=parseFloat(document.getElementById("f-lat").value);
+  if(isFinite(lng)&&isFinite(lat)){if(pin)pin.setLngLat([lng,lat]);else pin=new maplibregl.Marker({color:"#2e7d5b"}).setLngLat([lng,lat]).addTo(lm);lm.easeTo({center:[lng,lat],zoom:Math.max(lm.getZoom(),8),duration:400});}
+}
+
+function buildStanzas(text){
+  // stanzas separated by blank line; a line starting with "- " is the refrain
+  return text.split(/\n\s*\n/).map(block=>{
+    const lines=block.split("\n");
+    let refrain="";const body=[];
+    lines.forEach(l=>{
+      if(/^\s*-\s+/.test(l))refrain=l.replace(/^\s*-\s+/,"").trim();
+      else body.push(l);
+    });
+    return {t:body.join("\n").trim(), r:refrain};
+  }).filter(s=>s.t||s.r);
+}
+function buildProse(text){
+  // paragraphs separated by blank line -> a single body string with <p> paragraphs
+  return text.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean).map(p=>"<p>"+p.replace(/</g,"&lt;")+"</p>").join("");
+}
+
+document.getElementById("gen").onclick=()=>{
+  const title=document.getElementById("f-title").value.trim();
+  const place=document.getElementById("f-place").value.trim();
+  const lng=parseFloat(document.getElementById("f-lng").value),lat=parseFloat(document.getElementById("f-lat").value);
+  if(!title||!place||!isFinite(lng)||!isFinite(lat)){alert("Need at least a title, a place, and a location (click the map or type coordinates).");return;}
+  let color=document.getElementById("f-color").value.trim()||"emerald";
+  const props={
+    id:slugify(title),place:place,title:title,
+    date:document.getElementById("f-date").value.trim(),
+    coords:document.getElementById("f-coords").value.trim(),
+    color:color, order:nextOrder,
+    teaser:"" // optional; can add in file later
+  };
+  const sub=document.getElementById("f-substack").value.trim();
+  if(sub)props.substack=sub;
+  const body=document.getElementById("f-body").value;
+  if(entryType==="poem")props.stanzas=buildStanzas(body);
+  else props.body=buildProse(body);
+
+  const feature={type:"Feature",geometry:{type:"Point",coordinates:[+lng.toFixed(6),+lat.toFixed(6)]},properties:props};
+
+  // combine with existing (keep any route LineString etc.), append new point
+  const out={type:"FeatureCollection"};
+  if(existing._howto)out._howto=existing._howto;
+  out.features=(existing.features||[]).slice();
+  out.features.push(feature);
+
+  document.getElementById("out").value=JSON.stringify(out,null,2);
+  document.getElementById("result").style.display="block";
+  document.getElementById("status").textContent="Generated. Copy or download, then replace entries.geojson in your repo.";
+};
+
+document.getElementById("copy").onclick=()=>{
+  const t=document.getElementById("out");t.select();document.execCommand("copy");
+  document.getElementById("copy").textContent="Copied ✓";setTimeout(()=>document.getElementById("copy").textContent="Copy",1500);
+};
+document.getElementById("download").onclick=()=>{
+  const blob=new Blob([document.getElementById("out").value],{type:"application/geo+json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="entries.geojson";a.click();
+};
+</script>
+</body>
+</html>
