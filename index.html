@@ -237,7 +237,7 @@ function loadEntries(){
 }
 /* thread geometry: explicit route if provided, else through points in order */
 function threadCoords(){return routeOverride||entries.map(e=>e.coordinates);}
-function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/&lt;(\/?)(b|i|u)&gt;/g,"<$1$2>").replace(/\n/g,"<br>");}
 
 let emap=null;
 function buildEntryMap(e){

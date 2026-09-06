@@ -34,6 +34,9 @@
   .btn.secondary{background:#fff;color:var(--emerald);border:1px solid var(--emerald)}
   .out{width:100%;height:220px;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre;overflow:auto;background:#1f2b25;color:#d7e6dd;border-radius:10px;padding:14px;border:0}
   .stanza-help{font-size:12px;color:var(--ink-faint);font-style:italic;margin-top:6px;line-height:1.5}
+  .fmtbar{display:flex;gap:6px;margin:0 0 6px}
+  .fmtbar button{width:34px;height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);cursor:pointer;font-size:15px;font-family:Georgia,serif}
+  .fmtbar button:hover{background:var(--emerald);color:#fff;border-color:var(--emerald)}
   .steps{background:rgba(46,125,91,.08);border-radius:10px;padding:16px 18px;font-size:14px;line-height:1.6;color:var(--ink-soft)}
   .steps b{color:var(--ink)}
   .pill{display:inline-block;font-size:11px;background:var(--emerald);color:#fff;border-radius:20px;padding:2px 9px;margin-left:6px;vertical-align:2px}
@@ -43,7 +46,6 @@
 <body>
 <div class="wrap">
   <h1>Compose an entry <span class="g">— Andares</span></h1>
-  <p class="lead">Fill this out, hit generate, and it produces the complete entries.geojson for you to commit. Nothing here saves on its own — it just writes the file so you don't have to touch the JSON by hand.</p>
 
   <div class="card">
     <label>Entry type</label>
@@ -76,7 +78,12 @@
   </div>
 
   <div class="card">
-    <label id="body-label">The poem</label>
+    <label id="body-label">Insert text</label>
+    <div class="fmtbar" id="fmtbar">
+      <button type="button" data-tag="b" title="Bold"><strong>B</strong></button>
+      <button type="button" data-tag="i" title="Italic"><em>I</em></button>
+      <button type="button" data-tag="u" title="Underline"><span style="text-decoration:underline">U</span></button>
+    </div>
     <textarea id="f-body" rows="12" placeholder="Type or paste here with normal line breaks."></textarea>
     <div class="stanza-help" id="poem-help">
       <b>Poem format:</b> separate stanzas with a blank line. To mark a refrain (the italic line under a stanza), start that line with a dash and space: <b>- I yield.</b>
@@ -103,6 +110,23 @@
 </div>
 
 <script>
+// formatting buttons — wrap the selected text in the chosen tag
+document.querySelectorAll("#fmtbar button").forEach(b=>{
+  b.onclick=()=>{
+    const ta=document.getElementById("f-body");
+    const s=ta.selectionStart, e=ta.selectionEnd;
+    if(s===e){ta.focus();return;} // nothing selected
+    const tag=b.dataset.tag;
+    const sel=ta.value.slice(s,e);
+    const wrapped="<"+tag+">"+sel+"</"+tag+">";
+    ta.value=ta.value.slice(0,s)+wrapped+ta.value.slice(e);
+    // reselect the inner text for convenience
+    ta.focus();
+    ta.selectionStart=s+tag.length+2;
+    ta.selectionEnd=ta.selectionStart+sel.length;
+  };
+});
+
 const PRESET={emerald:"#2e7d5b",marigold:"#e0a530",clay:"#c96f3a",coral:"#d98e78",sage:"#6a9a5b",water:"#3a7ca5",pine:"#1f3d2e"};
 let entryType="poem";
 let existing={type:"FeatureCollection",features:[]};
@@ -121,7 +145,7 @@ document.querySelectorAll("#typeswitch button").forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll("#typeswitch button").forEach(x=>x.classList.remove("on"));
     b.classList.add("on");entryType=b.dataset.type;
-    document.getElementById("body-label").textContent = entryType==="poem"?"The poem":"The writing";
+    document.getElementById("body-label").textContent = "Insert text";
     document.getElementById("poem-help").style.display = entryType==="poem"?"block":"none";
     document.getElementById("f-body").placeholder = entryType==="poem"
       ? "Type or paste here with normal line breaks."
@@ -164,6 +188,14 @@ function syncPinFromFields(){
   if(isFinite(lng)&&isFinite(lat)){if(pin)pin.setLngLat([lng,lat]);else pin=new maplibregl.Marker({color:"#2e7d5b"}).setLngLat([lng,lat]).addTo(lm);lm.easeTo({center:[lng,lat],zoom:Math.max(lm.getZoom(),8),duration:400});}
 }
 
+// escape everything except our allowed formatting tags <b> <i> <u>
+function safeInline(s){
+  return String(s)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    // restore the allowed tags
+    .replace(/&lt;(\/?)(b|i|u)&gt;/g,"<$1$2>");
+}
 function buildStanzas(text){
   // stanzas separated by blank line; a line starting with "- " is the refrain
   return text.split(/\n\s*\n/).map(block=>{
@@ -173,12 +205,13 @@ function buildStanzas(text){
       if(/^\s*-\s+/.test(l))refrain=l.replace(/^\s*-\s+/,"").trim();
       else body.push(l);
     });
-    return {t:body.join("\n").trim(), r:refrain};
+    return {t:safeInline(body.join("\n").trim()), r:safeInline(refrain)};
   }).filter(s=>s.t||s.r);
 }
 function buildProse(text){
-  // paragraphs separated by blank line -> a single body string with <p> paragraphs
-  return text.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean).map(p=>"<p>"+p.replace(/</g,"&lt;")+"</p>").join("");
+  // paragraphs separated by blank line -> body string with <p> paragraphs
+  return text.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean)
+    .map(p=>"<p>"+safeInline(p).replace(/\n/g,"<br>")+"</p>").join("");
 }
 
 document.getElementById("gen").onclick=()=>{
