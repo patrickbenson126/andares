@@ -147,10 +147,8 @@
       <span class="ss-label">map style:</span>
       <button data-style="outdoor" class="on">Outdoor</button>
       <button data-style="topo">Topo</button>
-      <button data-style="winter">Winter</button>
-      <button data-style="landscape">Landscape</button>
-      <button data-style="backdrop">Backdrop</button>
-      <button data-style="streets">Streets</button>
+      <button data-style="satellite">Satellite</button>
+      <button data-style="hybrid">Hybrid</button>
     </div>
     <div id="map" role="region" aria-label="Topographic map of all wandering locations"></div>
   </section>
@@ -194,12 +192,11 @@ const MT_KEY="SHp6kD0YFefpooKLTZDu";
 const MT_STYLES={
   outdoor:"outdoor-v2",
   topo:"topo-v2",
-  winter:"winter-v2",
-  landscape:"landscape",
-  backdrop:"backdrop",
-  streets:"streets-v2"
+  satellite:"satellite",
+  hybrid:"hybrid"
 };
 let MT_CURRENT = localStorage_getSafe("andares_mapstyle") || "outdoor";
+if(!MT_STYLES[MT_CURRENT]) MT_CURRENT="outdoor";
 function MT_STYLE(){return "https://api.maptiler.com/maps/"+MT_STYLES[MT_CURRENT]+"/style.json?key="+MT_KEY;}
 function localStorage_getSafe(k){try{return window.localStorage.getItem(k);}catch(e){return null;}}
 function localStorage_setSafe(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
@@ -274,8 +271,9 @@ function init(){
   // switching styles clears custom sources/layers.
   function addThread(){
     if(map.getSource("thread"))return;
+    const dark=(MT_CURRENT==="satellite"||MT_CURRENT==="hybrid");
     map.addSource("thread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:entries.map(e=>e.coordinates)}}});
-    map.addLayer({id:"thread",type:"line",source:"thread",paint:{"line-color":"#4a6353","line-width":2,"line-dasharray":[2,2],"line-opacity":.55}});
+    map.addLayer({id:"thread",type:"line",source:"thread",paint:{"line-color":dark?"#ffffff":"#4a6353","line-width":2,"line-dasharray":[2,2],"line-opacity":dark?.9:.55}});
   }
   let firstLoad=true;
   map.on("style.load",()=>{
@@ -301,6 +299,7 @@ function init(){
 
   // style switcher (temporary — for choosing the look)
   document.querySelectorAll("#styleswitch button").forEach(btn=>{
+    btn.classList.toggle("on", btn.dataset.style===MT_CURRENT);
     btn.addEventListener("click",()=>{
       document.querySelectorAll("#styleswitch button").forEach(b=>b.classList.remove("on"));
       btn.classList.add("on");
