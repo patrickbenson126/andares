@@ -32,18 +32,19 @@
   .contours{position:absolute;inset:0;z-index:0;pointer-events:none;
     background-image:url('contours.png');background-size:cover;background-position:center;opacity:.85}
   .splash .inner{position:relative;z-index:1;max-width:660px;margin:0 auto;padding:6vh 32px;width:100%}
+  .splash .inner .panel{background:rgba(251,250,243,.55);border-radius:14px;padding:40px 44px;
+    backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px)}
 
   .brandrow{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:30px}
   .portrait{width:96px;height:96px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 0 0 4px var(--cloud),0 6px 20px rgba(31,61,46,.25)}
-  .brandrow .names h1{margin:0;font-size:clamp(38px,6vw,54px);font-weight:700;line-height:1;letter-spacing:-.02em;text-shadow:0 1px 3px rgba(251,250,243,.9),0 0 18px rgba(251,250,243,.8)}
+  .brandrow .names h1{margin:0;font-size:clamp(38px,6vw,54px);font-weight:700;line-height:1;letter-spacing:-.02em}
   .brandrow .names h1 .gloss{font-weight:400;font-style:italic;font-size:.46em;color:var(--emerald)}
   .brandrow .names .byline{margin:8px 0 0;font-size:15px;font-style:italic;color:var(--ink-soft)}
 
-  .welcome{font-size:19px;line-height:1.74;color:var(--ink);max-width:600px;
-    text-shadow:0 1px 2px rgba(251,250,243,.9),0 0 14px rgba(251,250,243,.85)}
+  .welcome{font-size:19px;line-height:1.74;color:var(--ink);max-width:600px}
   .welcome em{font-style:italic}
   .welcome .vamos{color:var(--emerald);font-weight:600;font-style:italic}
-  .coord-tag{margin-top:26px;font-size:12px;letter-spacing:.06em;color:var(--ink-faint);font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(251,250,243,.9)}
+  .coord-tag{margin-top:26px;font-size:12px;letter-spacing:.06em;color:var(--ink-faint);font-variant-numeric:tabular-nums}
 
   .scroll-cue{position:absolute;bottom:22px;left:0;right:0;text-align:center;color:var(--ink-faint);font-size:13px;font-style:italic;letter-spacing:.04em;z-index:1}
   .scroll-cue .arrow{display:block;margin:8px auto 0;width:18px;height:18px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(45deg);opacity:.55}
@@ -117,6 +118,7 @@
     <div class="contours" aria-hidden="true"></div>
 
     <div class="inner">
+      <div class="panel">
       <div class="brandrow">
         <img class="portrait" src="pat.jpg" alt="Pat outdoors, with mountains and water behind him">
         <div class="names">
@@ -128,18 +130,19 @@
       <div class="welcome">
         My friend, thank you for being here. <em>Andares</em> means wandering, and that's all this is. I've been a <em>map guy</em> for so long. Now getting lost, in a place, an emotion, an experience, is the work. This is a mashup of those worlds: letting go of the path (whatever that is), still noticing all the beauty and vibrancy around me, and sharing it with you! <span class="vamos">¿Vamos?</span>
       </div>
-      <p class="coord-tag">◆ now wandering · 15.09° N, 90.42° W · Guatemala</p>
+      <p class="coord-tag">◆ somewhere near · 15.09° N, 90.42° W</p>
+      </div>
     </div>
   </section>
 
   <section class="mapzone" aria-label="Map of all wanderings">
-    <p class="mlabel">The whole wander</p>
+    <p class="mlabel">Everywhere (so far)</p>
     <p class="msub">Every place, and the thread between them. Tap a pin to open what came there.</p>
     <div id="map" role="region" aria-label="Topographic map of all wandering locations"></div>
   </section>
 
   <section class="wanderings" aria-label="Wanderings">
-    <p class="section-head">Wanderings</p>
+    <p class="section-head">Noticings</p>
 
     <article class="entry-stub" style="--pc:#3a7ca5">
       <p class="meta"><span class="place">Anderson Flats, BC</span> · late summer</p>
@@ -159,7 +162,7 @@
   <div class="entryview" id="entryview" role="dialog" aria-modal="true" aria-label="Entry">
     <div class="ev-inner">
       <div class="ev-read">
-        <button class="ev-back" id="evBack">back to the wander</button>
+        <button class="ev-back" id="evBack">back</button>
         <p class="ev-meta"><span class="ev-place" id="evPlace"></span></p>
         <p class="ev-coords" id="evCoords"></p>
         <h1 class="ev-title" id="evTitle"></h1>
@@ -213,7 +216,7 @@ function openEntry(id){
   if(e.stanzas){
     body.innerHTML=e.stanzas.map(s=>'<div class="stanza">'+s.t+'<span class="refrain">— '+s.r+'</span></div>').join("");
   }else{
-    body.innerHTML='<p style="font-style:italic;color:#7c9184">This wandering hasn\u2019t been written yet. Soon.</p>';
+    body.innerHTML='<p style="font-style:italic;color:#7c9184">Not written yet. Soon.</p>';
   }
   const ev=document.getElementById("entryview");ev.classList.add("open");
   document.body.style.overflow="hidden";
