@@ -106,6 +106,9 @@
   .poem-body .stanza{margin:0 0 24px;white-space:pre-line}
   .poem-body .refrain{display:block;margin-top:4px;font-style:italic;color:var(--pc,var(--emerald))}
   .ev-map{position:relative;background:#eae4d3}
+  .ev-switch{position:absolute;top:14px;left:14px;z-index:5;margin:0;padding:6px;
+    background:rgba(251,250,243,.82);border-radius:22px;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);box-shadow:0 3px 12px rgba(31,61,46,.18)}
+  .ev-switch button{font-size:12px;padding:4px 10px}
   #emap{position:absolute;inset:0}
   @media (max-width:820px){
     .ev-inner{grid-template-columns:1fr}
@@ -181,7 +184,14 @@
         <p class="ev-date" id="evDate"></p>
         <div class="poem-body" id="evBody"></div>
       </div>
-      <div class="ev-map"><div id="emap" role="region" aria-label="Map focused on this entry's place"></div></div>
+      <div class="ev-map"><div id="emap" role="region" aria-label="Map focused on this entry's place"></div>
+        <div class="styleswitch ev-switch" id="evStyleswitch" aria-label="Map style">
+          <button data-style="outdoor">Outdoor</button>
+          <button data-style="topo">Topo</button>
+          <button data-style="satellite">Satellite</button>
+          <button data-style="hybrid">Hybrid</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -229,7 +239,17 @@ function buildEntryMap(e){
   emap.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
   const el=document.createElement("div");el.className="pin here";el.style.setProperty("--pc",e.color);
   el.innerHTML='<div class="dot"></div>';
-  new maplibregl.Marker({element:el,anchor:"center"}).setLngLat(e.coordinates).addTo(emap);
+  const emarker=new maplibregl.Marker({element:el,anchor:"center"}).setLngLat(e.coordinates).addTo(emap);
+  // sync + wire the entry-view style switcher
+  document.querySelectorAll("#evStyleswitch button").forEach(btn=>{
+    btn.classList.toggle("on", btn.dataset.style===MT_CURRENT);
+    btn.onclick=()=>{
+      document.querySelectorAll("#evStyleswitch button").forEach(b=>b.classList.remove("on"));
+      btn.classList.add("on");
+      MT_CURRENT=btn.dataset.style; localStorage_setSafe("andares_mapstyle",MT_CURRENT);
+      emap.setStyle(MT_STYLE());
+    };
+  });
 }
 
 function openEntry(id){
