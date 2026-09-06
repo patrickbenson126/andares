@@ -37,6 +37,10 @@
   .fmtbar{display:flex;gap:6px;margin:0 0 6px}
   .fmtbar button{width:34px;height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);cursor:pointer;font-size:15px;font-family:Georgia,serif}
   .fmtbar button:hover{background:var(--emerald);color:#fff;border-color:var(--emerald)}
+  .fmtbar button.active{background:var(--emerald);color:#fff;border-color:var(--emerald)}
+  .richbox{width:100%;min-height:220px;font-family:inherit;font-size:15px;line-height:1.6;padding:11px 13px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);overflow-y:auto}
+  .richbox:focus{outline:2px solid var(--emerald);outline-offset:1px}
+  .richbox:empty:before{content:attr(data-placeholder);color:var(--ink-faint);font-style:italic}
   .steps{background:rgba(46,125,91,.08);border-radius:10px;padding:16px 18px;font-size:14px;line-height:1.6;color:var(--ink-soft)}
   .steps b{color:var(--ink)}
   .pill{display:inline-block;font-size:11px;background:var(--emerald);color:#fff;border-radius:20px;padding:2px 9px;margin-left:6px;vertical-align:2px}
@@ -80,11 +84,11 @@
   <div class="card">
     <label id="body-label">Insert text</label>
     <div class="fmtbar" id="fmtbar">
-      <button type="button" data-tag="b" title="Bold"><strong>B</strong></button>
-      <button type="button" data-tag="i" title="Italic"><em>I</em></button>
-      <button type="button" data-tag="u" title="Underline"><span style="text-decoration:underline">U</span></button>
+      <button type="button" data-cmd="bold" title="Bold"><strong>B</strong></button>
+      <button type="button" data-cmd="italic" title="Italic"><em>I</em></button>
+      <button type="button" data-cmd="underline" title="Underline"><span style="text-decoration:underline">U</span></button>
     </div>
-    <textarea id="f-body" rows="12" placeholder="Type or paste here with normal line breaks."></textarea>
+    <div id="f-body" class="richbox" contenteditable="true" data-placeholder="Type or paste here. Use Enter for a new line, and a blank line between stanzas or paragraphs."></div>
     <div class="stanza-help" id="poem-help">
       <b>Poem format:</b> separate stanzas with a blank line. To mark a refrain (the italic line under a stanza), start that line with a dash and space: <b>- I yield.</b>
     </div>
@@ -110,21 +114,29 @@
 </div>
 
 <script>
-// formatting buttons — wrap the selected text in the chosen tag
+// formatting buttons — real toggle via execCommand on the rich editor
+const rich=document.getElementById("f-body");
 document.querySelectorAll("#fmtbar button").forEach(b=>{
+  b.onmousedown=ev=>{ev.preventDefault();}; // keep selection
   b.onclick=()=>{
-    const ta=document.getElementById("f-body");
-    const s=ta.selectionStart, e=ta.selectionEnd;
-    if(s===e){ta.focus();return;} // nothing selected
-    const tag=b.dataset.tag;
-    const sel=ta.value.slice(s,e);
-    const wrapped="<"+tag+">"+sel+"</"+tag+">";
-    ta.value=ta.value.slice(0,s)+wrapped+ta.value.slice(e);
-    // reselect the inner text for convenience
-    ta.focus();
-    ta.selectionStart=s+tag.length+2;
-    ta.selectionEnd=ta.selectionStart+sel.length;
+    rich.focus();
+    document.execCommand(b.dataset.cmd,false,null);
+    updateFmtState();
   };
+});
+function updateFmtState(){
+  document.querySelectorAll("#fmtbar button").forEach(b=>{
+    let on=false; try{on=document.queryCommandState(b.dataset.cmd);}catch(e){}
+    b.classList.toggle("active",on);
+  });
+}
+rich.addEventListener("keyup",updateFmtState);
+rich.addEventListener("mouseup",updateFmtState);
+// paste as plain text so pasted formatting/junk doesn't leak in
+rich.addEventListener("paste",e=>{
+  e.preventDefault();
+  const t=(e.clipboardData||window.clipboardData).getData("text");
+  document.execCommand("insertText",false,t);
 });
 
 const PRESET={emerald:"#2e7d5b",marigold:"#e0a530",clay:"#c96f3a",coral:"#d98e78",sage:"#6a9a5b",water:"#3a7ca5",pine:"#1f3d2e"};
@@ -147,9 +159,9 @@ document.querySelectorAll("#typeswitch button").forEach(b=>{
     b.classList.add("on");entryType=b.dataset.type;
     document.getElementById("body-label").textContent = "Insert text";
     document.getElementById("poem-help").style.display = entryType==="poem"?"block":"none";
-    document.getElementById("f-body").placeholder = entryType==="poem"
-      ? "Type or paste here with normal line breaks."
-      : "Type or paste your prose. Separate paragraphs with a blank line.";
+    document.getElementById("f-body").setAttribute("data-placeholder", entryType==="poem"
+      ? "Type or paste your poem. Blank line between stanzas; start a line with \u201c- \u201d to mark a refrain."
+      : "Type or paste your prose. Blank line between paragraphs.");
   };
 });
 
@@ -196,6 +208,26 @@ function safeInline(s){
     // restore the allowed tags
     .replace(/&lt;(\/?)(b|i|u)&gt;/g,"<$1$2>");
 }
+// pull clean text from the rich editor: keep <b>/<i>/<u>, turn block breaks into \n
+function readRich(){
+  const box=document.getElementById("f-body");
+  let html=box.innerHTML;
+  html=html
+    .replace(/<div><br><\/div>/gi,"\n")
+    .replace(/<br\s*\/?>/gi,"\n")
+    .replace(/<\/(div|p)>/gi,"\n")
+    .replace(/<(div|p)[^>]*>/gi,"");
+  // strip everything except b/i/u/strong/em
+  html=html.replace(/<(?!\/?(b|i|u|strong|em)\b)[^>]*>/gi,"");
+  // normalize strong/em to b/i
+  html=html.replace(/<\/?strong>/gi,m=>m[1]==="/"?"</b>":"<b>").replace(/<\/?em>/gi,m=>m[1]==="/"?"</i>":"<i>");
+  // decode common entities the editor may insert
+  const tmp=document.createElement("textarea");
+  // (don't decode tags — only entities inside text). Simpler: replace &nbsp;
+  html=html.replace(/&nbsp;/gi," ");
+  return html.replace(/\n{3,}/g,"\n\n").trim();
+}
+
 function buildStanzas(text){
   // stanzas separated by blank line; a line starting with "- " is the refrain
   return text.split(/\n\s*\n/).map(block=>{
@@ -229,7 +261,7 @@ document.getElementById("gen").onclick=()=>{
   };
   const sub=document.getElementById("f-substack").value.trim();
   if(sub)props.substack=sub;
-  const body=document.getElementById("f-body").value;
+  const body=readRich();
   if(entryType==="poem")props.stanzas=buildStanzas(body);
   else props.body=buildProse(body);
 
