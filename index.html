@@ -237,9 +237,30 @@ function buildEntryMap(e){
     center:e.coordinates,zoom:13,attributionControl:{compact:true}
   });
   emap.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
-  const el=document.createElement("div");el.className="pin here";el.style.setProperty("--pc",e.color);
-  el.innerHTML='<div class="dot"></div>';
-  const emarker=new maplibregl.Marker({element:el,anchor:"center"}).setLngLat(e.coordinates).addTo(emap);
+
+  const dark=(MT_CURRENT==="satellite"||MT_CURRENT==="hybrid");
+  emap.on("style.load",()=>{
+    if(!emap.getSource("ethread")){
+      emap.addSource("ethread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:entries.map(x=>x.coordinates)}}});
+      emap.addLayer({id:"ethread",type:"line",source:"ethread",paint:{"line-color":dark?"#ffffff":"#4a6353","line-width":2,"line-dasharray":[2,2],"line-opacity":dark?.9:.5}});
+    }
+  });
+
+  // all pins; current one highlighted, others tappable to switch entry
+  entries.forEach(x=>{
+    const isCur = x.id===e.id;
+    const el=document.createElement("div");
+    el.className="pin"+(isCur?" here":"");el.style.setProperty("--pc",x.color);
+    el.innerHTML='<div class="plabel">'+x.place+'</div><div class="dot"></div>';
+    el.setAttribute("role","button");el.setAttribute("aria-label",(isCur?"Current: ":"Go to ")+x.title+", "+x.place);el.tabIndex=0;
+    new maplibregl.Marker({element:el,anchor:"center"}).setLngLat(x.coordinates).addTo(emap);
+    if(!isCur){
+      const go=()=>openEntry(x.id);           // switch the open entry in place
+      el.addEventListener("click",ev=>{ev.stopPropagation();go();});
+      el.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();go();}});
+    }
+  });
+
   // sync + wire the entry-view style switcher
   document.querySelectorAll("#evStyleswitch button").forEach(btn=>{
     btn.classList.toggle("on", btn.dataset.style===MT_CURRENT);
@@ -265,11 +286,14 @@ function openEntry(id){
   }else{
     body.innerHTML='<p style="font-style:italic;color:#7c9184">Not written yet. Soon.</p>';
   }
-  const ev=document.getElementById("entryview");ev.classList.add("open");
+  const ev=document.getElementById("entryview");
+  const wasOpen=ev.classList.contains("open");
+  ev.classList.add("open");
   document.body.style.overflow="hidden";
+  ev.scrollTop=0; // start at the top of the new poem
   if(window.location.hash!=="#"+id)history.replaceState(null,"","#"+id);
   setTimeout(()=>{buildEntryMap(e);},30);
-  document.getElementById("evBack").focus();
+  if(!wasOpen)document.getElementById("evBack").focus();
 }
 function closeEntry(){
   document.getElementById("entryview").classList.remove("open");
