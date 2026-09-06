@@ -66,6 +66,11 @@
   .mapzone{max-width:1080px;margin:0 auto;padding:2vh 24px 4vh}
   .mapzone .mlabel{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--emerald);font-weight:600;margin:0 0 4px}
   .mapzone .msub{margin:0 0 18px;font-size:14.5px;font-style:italic;color:var(--ink-soft)}
+  .styleswitch{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+  .styleswitch .ss-label{font-size:12px;color:var(--ink-faint);font-style:italic;margin-right:4px}
+  .styleswitch button{font-family:inherit;font-size:13px;padding:5px 12px;border:1px solid var(--line);border-radius:20px;background:rgba(251,250,243,.7);color:var(--ink-soft);cursor:pointer;transition:all .15s}
+  .styleswitch button:hover{background:#fff}
+  .styleswitch button.on{background:var(--emerald);color:#fff;border-color:var(--emerald)}
   #map{height:min(64vh,560px);border-radius:12px;overflow:hidden;background:#eae4d3;box-shadow:0 10px 40px rgba(31,61,46,.18);border:1px solid var(--line)}
   .maplibregl-ctrl-attrib{font-size:10px;background:rgba(251,250,243,.85)!important;font-family:system-ui,sans-serif}
   .maplibregl-ctrl-group{background:var(--cloud);border:1px solid var(--line)!important;box-shadow:none!important}
@@ -138,6 +143,15 @@
   <section class="mapzone" aria-label="Map of all wanderings">
     <p class="mlabel">Everywhere (so far)</p>
     <p class="msub">Every place, and the thread between them. Tap a pin to open what came there.</p>
+    <div class="styleswitch" id="styleswitch" aria-label="Map style (temporary — for picking)">
+      <span class="ss-label">map style:</span>
+      <button data-style="outdoor" class="on">Outdoor</button>
+      <button data-style="topo">Topo</button>
+      <button data-style="winter">Winter</button>
+      <button data-style="landscape">Landscape</button>
+      <button data-style="backdrop">Backdrop</button>
+      <button data-style="streets">Streets</button>
+    </div>
     <div id="map" role="region" aria-label="Topographic map of all wandering locations"></div>
   </section>
 
@@ -174,6 +188,22 @@
   </div>
 
 <script>
+/* ---- MapTiler config ---- */
+const MT_KEY="SHp6kD0YFefpooKLTZDu";
+/* Built-in styles to try. Flip with the switcher on the live site. */
+const MT_STYLES={
+  outdoor:"outdoor-v2",
+  topo:"topo-v2",
+  winter:"winter-v2",
+  landscape:"landscape",
+  backdrop:"backdrop",
+  streets:"streets-v2"
+};
+let MT_CURRENT = localStorage_getSafe("andares_mapstyle") || "outdoor";
+function MT_STYLE(){return "https://api.maptiler.com/maps/"+MT_STYLES[MT_CURRENT]+"/style.json?key="+MT_KEY;}
+function localStorage_getSafe(k){try{return window.localStorage.getItem(k);}catch(e){return null;}}
+function localStorage_setSafe(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
+
 /* Entries — seed of the GeoJSON data model (step: external file later).
    Order = journey order. `body` holds the full entry (poem stanzas here). */
 const entries=[
@@ -196,7 +226,7 @@ function buildEntryMap(e){
   if(emap){emap.remove();emap=null;}
   emap=new maplibregl.Map({
     container:"emap",
-    style:{version:8,sources:{topo:{type:"raster",tiles:["https://a.tile.opentopomap.org/{z}/{x}/{y}.png","https://b.tile.opentopomap.org/{z}/{x}/{y}.png","https://c.tile.opentopomap.org/{z}/{x}/{y}.png"],tileSize:256,maxzoom:17,attribution:"© OpenTopoMap (CC-BY-SA) · © OpenStreetMap contributors"}},layers:[{id:"topo",type:"raster",source:"topo"}]},
+    style:MT_STYLE(),
     center:e.coordinates,zoom:13,attributionControl:{compact:true}
   });
   emap.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
@@ -234,22 +264,30 @@ function closeEntry(){
 function init(){
   const map=new maplibregl.Map({
     container:"map",
-    style:{version:8,
-      sources:{topo:{type:"raster",tiles:["https://a.tile.opentopomap.org/{z}/{x}/{y}.png","https://b.tile.opentopomap.org/{z}/{x}/{y}.png","https://c.tile.opentopomap.org/{z}/{x}/{y}.png"],tileSize:256,maxzoom:17,attribution:"© OpenTopoMap (CC-BY-SA) · © OpenStreetMap contributors"}},
-      layers:[{id:"topo",type:"raster",source:"topo"}]},
+    style:MT_STYLE(),
     center:[-108,35],zoom:2,attributionControl:{compact:true}
   });
   map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
   const reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
 
-  const markers=[];
-  map.on("load",()=>{
+  // (re)draw the journey thread — must run on every style load, since
+  // switching styles clears custom sources/layers.
+  function addThread(){
+    if(map.getSource("thread"))return;
     map.addSource("thread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:entries.map(e=>e.coordinates)}}});
     map.addLayer({id:"thread",type:"line",source:"thread",paint:{"line-color":"#4a6353","line-width":2,"line-dasharray":[2,2],"line-opacity":.55}});
-    const b=new maplibregl.LngLatBounds();entries.forEach(e=>b.extend(e.coordinates));
-    map.fitBounds(b,{padding:70,maxZoom:6,duration:0});
+  }
+  let firstLoad=true;
+  map.on("style.load",()=>{
+    addThread();
+    if(firstLoad){
+      const b=new maplibregl.LngLatBounds();entries.forEach(e=>b.extend(e.coordinates));
+      map.fitBounds(b,{padding:70,maxZoom:6,duration:0});
+      firstLoad=false;
+    }
   });
 
+  const markers=[];
   entries.forEach((e,i)=>{
     const el=document.createElement("div");el.className="pin";el.style.setProperty("--pc",e.color);
     el.innerHTML='<div class="plabel">'+e.place+'</div><div class="dot"></div>';
@@ -259,6 +297,16 @@ function init(){
     el.addEventListener("click",open);
     el.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();open();}});
     markers.push(el);
+  });
+
+  // style switcher (temporary — for choosing the look)
+  document.querySelectorAll("#styleswitch button").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      document.querySelectorAll("#styleswitch button").forEach(b=>b.classList.remove("on"));
+      btn.classList.add("on");
+      MT_CURRENT=btn.dataset.style; localStorage_setSafe("andares_mapstyle",MT_CURRENT);
+      map.setStyle(MT_STYLE());
+    });
   });
 
   // entry list links + pins both open the entry view
