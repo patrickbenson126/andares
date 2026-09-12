@@ -48,17 +48,18 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [-90.4211, 15.0654] },
+      "geometry": { "type": "Point", "coordinates": [-90.6547, 14.5808] },
       "properties": {
-        "id": "salama",
-        "place": "Salamá, Guatemala",
-        "title": "The town with no addresses",
-        "date": "coming soon",
-        "coords": "15°03′55″N 90°25′16″W",
-        "color": "#e0a530",
+        "id": "hammock-guy",
+        "place": "Santa Lucía Milpas Altas, Guatemala",
+        "title": "Hammock Guy",
+        "date": "this week",
+        "coords": "14°34′51″N 90°39′17″W",
+        "color": "#d99a9a",
         "order": 2,
-        "teaser": "On navigating by memory instead of street number, where an address is a story you tell.",
-        "body": ""
+        "teaser": "On comfort — the kind you chase out there, and the kind that only settles in once you stop.",
+        "body": "<p>My attempts to define comfort lately have felt like a contortion, an odd projection of insecurity.</p><p>Our PC staff showed us a graphic: someone lying in a hammock, hands behind their head, under the label \u201cComfort Zone.\u201d On the other side, a person wearing a crown, flying through the air with wings and a magic wand, labeled \u201cMagic Zone,\u201d a strong, defining line drawn between the two.</p><p>Anytime I see a dualistic model for unpacking a complex concept, I tend to raise an eyebrow. Binary thinking not only pushes us toward fear through comparison, it's often the product of a simplistic, reductionist perspective.</p><p>Be that as it may, the question I'd pose to you, dear reader: what is real comfort?</p><p>Pausing to reflect on my own life, I'm not sure I could point to a single external source I've consistently relied on to make me feel it. Not trying to shit on hammock guy, I'd venture he did feel a real comfort resting there, gently swaying side to side, like an infant held close in a mother's arms.</p><p>But we tend to treat these external supports as proof of an internal security. <i>If I can just find this out there, I'll take it in and turn it into fuel, power for the cells of safety that so desperately need it.</i> And so we keep chasing, keep looking, for some person or some moment to make us feel not even better, just different.</p><p>Real comfort, the kind that courses through your veins and fills the marrow in your bones, only comes with accepting that no external source will ever give us the feeling we want most. And there's a strange freedom in that. Comfort isn't a place you arrive at. It's what settles in once you stop trying to get there.</p>",
+        "substack": ""
       }
     }
   ]
