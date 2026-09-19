@@ -154,10 +154,12 @@
   <section class="mapzone" aria-label="Map of all wanderings">
     <p class="mlabel">Everywhere (so far)</p>
     <p class="msub">Every place, and the thread between them. Tap a pin to open what came there.</p>
-    <div class="styleswitch" id="styleswitch" aria-label="Map style (temporary — for picking)">
+    <div class="styleswitch" id="styleswitch" aria-label="Map style">
       <span class="ss-label">map style:</span>
-      <button data-style="outdoor" class="on">Outdoor</button>
-      <button data-style="topo">Topo</button>
+      <button data-style="streets" class="on">Streets</button>
+      <button data-style="basic">Basic</button>
+      <button data-style="bright">Bright</button>
+      <button data-style="dataviz">Clean</button>
       <button data-style="satellite">Satellite</button>
       <button data-style="hybrid">Hybrid</button>
     </div>
@@ -181,8 +183,8 @@
       </div>
       <div class="ev-map"><div id="emap" role="region" aria-label="Map focused on this entry's place"></div>
         <div class="styleswitch ev-switch" id="evStyleswitch" aria-label="Map style">
-          <button data-style="outdoor">Outdoor</button>
-          <button data-style="topo">Topo</button>
+          <button data-style="streets">Streets</button>
+          <button data-style="basic">Basic</button>
           <button data-style="satellite">Satellite</button>
           <button data-style="hybrid">Hybrid</button>
         </div>
@@ -195,13 +197,15 @@
 const MT_KEY="SHp6kD0YFefpooKLTZDu";
 /* Built-in styles to try. Flip with the switcher on the live site. */
 const MT_STYLES={
-  outdoor:"outdoor-v2",
-  topo:"topo-v2",
+  streets:"streets-v2",
+  basic:"basic-v2",
+  bright:"bright-v2",
+  dataviz:"dataviz",
   satellite:"satellite",
   hybrid:"hybrid"
 };
-let MT_CURRENT = localStorage_getSafe("andares_mapstyle") || "outdoor";
-if(!MT_STYLES[MT_CURRENT]) MT_CURRENT="outdoor";
+let MT_CURRENT = localStorage_getSafe("andares_mapstyle") || "streets";
+if(!MT_STYLES[MT_CURRENT]) MT_CURRENT="streets";
 function MT_STYLE(){return "https://api.maptiler.com/maps/"+MT_STYLES[MT_CURRENT]+"/style.json?key="+MT_KEY;}
 function localStorage_getSafe(k){try{return window.localStorage.getItem(k);}catch(e){return null;}}
 function localStorage_setSafe(k,v){try{window.localStorage.setItem(k,v);}catch(e){}}
@@ -342,6 +346,38 @@ function init(){
   map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
   const reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
 
+  // Build a clustered GeoJSON source for the entry points.
+  // Clusters merge nearby dots into a numbered circle that splits on zoom —
+  // this handles the pile-up as entries accumulate in one area.
+  const pointsFC={type:"FeatureCollection",features:entries.map(e=>({
+    type:"Feature",
+    geometry:{type:"Point",coordinates:e.coordinates},
+    properties:{id:e.id,title:e.title,place:e.place,color:e.color||"#2e7d5b"}
+  }))};
+
+  function addPointLayers(){
+    if(map.getSource("entries"))return;
+    map.addSource("entries",{type:"geojson",data:pointsFC,cluster:true,clusterRadius:38,clusterMaxZoom:11});
+    // cluster bubbles
+    map.addLayer({id:"clusters",type:"circle",source:"entries",filter:["has","point_count"],
+      paint:{
+        "circle-color":"#2e7d5b",
+        "circle-opacity":0.9,
+        "circle-radius":["step",["get","point_count"],16,5,20,15,26],
+        "circle-stroke-width":3,"circle-stroke-color":"#fbfaf3"
+      }});
+    map.addLayer({id:"cluster-count",type:"symbol",source:"entries",filter:["has","point_count"],
+      layout:{"text-field":["get","point_count_abbreviated"],"text-font":["Open Sans Bold","Arial Unicode MS Bold"],"text-size":14},
+      paint:{"text-color":"#fbfaf3"}});
+    // individual points (use each entry's color)
+    map.addLayer({id:"pts",type:"circle",source:"entries",filter:["!",["has","point_count"]],
+      paint:{
+        "circle-color":["get","color"],
+        "circle-radius":8,
+        "circle-stroke-width":2.5,"circle-stroke-color":"#fbfaf3"
+      }});
+  }
+
   // (re)draw the journey thread — must run on every style load, since
   // switching styles clears custom sources/layers.
   function addThread(){
@@ -353,6 +389,7 @@ function init(){
   let firstLoad=true;
   map.on("style.load",()=>{
     addThread();
+    addPointLayers();
     if(firstLoad){
       const b=new maplibregl.LngLatBounds();entries.forEach(e=>b.extend(e.coordinates));
       map.fitBounds(b,{padding:70,maxZoom:6,duration:0});
@@ -360,19 +397,27 @@ function init(){
     }
   });
 
-  const markers=[];
-  entries.forEach((e,i)=>{
-    const el=document.createElement("div");el.className="pin";el.style.setProperty("--pc",e.color);
-    el.innerHTML='<div class="plabel">'+e.place+'</div><div class="dot"></div>';
-    el.setAttribute("role","button");el.setAttribute("aria-label","Open "+e.title+", "+e.place);el.tabIndex=0;
-    new maplibregl.Marker({element:el,anchor:"center"}).setLngLat(e.coordinates).addTo(map);
-    const open=()=>openEntry(e.id);
-    el.addEventListener("click",open);
-    el.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();open();}});
-    markers.push(el);
+  // click a single point -> open its entry
+  map.on("click","pts",(ev)=>{
+    const id=ev.features[0].properties.id;
+    if(id)openEntry(id);
+  });
+  // click a cluster -> zoom in to expand it
+  map.on("click","clusters",(ev)=>{
+    const f=map.queryRenderedFeatures(ev.point,{layers:["clusters"]})[0];
+    const cid=f.properties.cluster_id;
+    map.getSource("entries").getClusterExpansionZoom(cid,(err,zoom)=>{
+      if(err)return;
+      map.easeTo({center:f.geometry.coordinates,zoom:zoom+0.3,duration:600});
+    });
+  });
+  // pointer cursor on hover
+  ["pts","clusters"].forEach(l=>{
+    map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer");
+    map.on("mouseleave",l,()=>map.getCanvas().style.cursor="");
   });
 
-  // style switcher (temporary — for choosing the look)
+  // style switcher
   document.querySelectorAll("#styleswitch button").forEach(btn=>{
     btn.classList.toggle("on", btn.dataset.style===MT_CURRENT);
     btn.addEventListener("click",()=>{
