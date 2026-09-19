@@ -1,27 +1,9 @@
 {
   "type": "FeatureCollection",
   "_howto": [
-    "HOW TO ADD AN ENTRY:",
-    "Copy one of the point features below, paste it into the 'features' list,",
-    "and change the fields. Keep the commas between features.",
-    "",
-    "  geometry.coordinates : [longitude, latitude]  (note: LONG first, then LAT)",
-    "  properties.id        : short url-safe slug, e.g. 'lake-atitlan' (used in the link)",
-    "  properties.place     : the place name shown on the page",
-    "  properties.title     : the entry title",
-    "  properties.date      : any text, e.g. 'on the Skeena, late summer'",
-    "  properties.coords    : the pretty coordinate string shown on the page",
-    "  properties.color     : a word (emerald, marigold, clay, coral, sage, water) OR a hex like '#3a7ca5'",
-    "  properties.order     : a number; entries are threaded together in this order (lowest first)",
-    "  properties.stanzas   : the poem. A list of {t, r} pairs: t = the lines, r = the refrain.",
-    "                         For line breaks inside t, write \\n .",
-    "                         For a prose entry instead of a poem, use 'body' (a paragraph of text) and omit 'stanzas'.",
-    "",
-    "OPTIONAL — a real route line:",
-    "  To override the auto-drawn thread with a real path, add a feature with",
-    "  geometry.type 'LineString' and properties.role 'route'. Its coordinates are",
-    "  [[lng,lat],[lng,lat],...]. If no such feature exists, the thread auto-draws",
-    "  through the points in 'order'."
+    "HOW TO ADD AN ENTRY: copy a point feature below, paste it into 'features', edit the fields.",
+    "coordinates: [longitude, latitude] (LONG first). color: preset word or hex.",
+    "order: threads entries together low->high. stanzas (poem) OR body (prose HTML). substack: optional URL."
   ],
   "features": [
     {
@@ -58,8 +40,24 @@
         "color": "#d99a9a",
         "order": 2,
         "teaser": "On comfort — the kind you chase out there, and the kind that only settles in once you stop.",
-        "body": "<p>My attempts to define comfort lately have felt like a contortion, an odd projection of insecurity.</p><p>Our PC staff showed us a graphic: someone lying in a hammock, hands behind their head, under the label \u201cComfort Zone.\u201d On the other side, a person wearing a crown, flying through the air with wings and a magic wand, labeled \u201cMagic Zone,\u201d a strong, defining line drawn between the two.</p><p>Anytime I see a dualistic model for unpacking a complex concept, I tend to raise an eyebrow. Binary thinking not only pushes us toward fear through comparison, it's often the product of a simplistic, reductionist perspective.</p><p>Be that as it may, the question I'd pose to you, dear reader: what is real comfort?</p><p>Pausing to reflect on my own life, I'm not sure I could point to a single external source I've consistently relied on to make me feel it. Not trying to shit on hammock guy, I'd venture he did feel a real comfort resting there, gently swaying side to side, like an infant held close in a mother's arms.</p><p>But we tend to treat these external supports as proof of an internal security. <i>If I can just find this out there, I'll take it in and turn it into fuel, power for the cells of safety that so desperately need it.</i> And so we keep chasing, keep looking, for some person or some moment to make us feel not even better, just different.</p><p>Real comfort, the kind that courses through your veins and fills the marrow in your bones, only comes with accepting that no external source will ever give us the feeling we want most. And there's a strange freedom in that. Comfort isn't a place you arrive at. It's what settles in once you stop trying to get there.</p>",
-        "substack": ""
+        "substack": "",
+        "body": "<p>My attempts to define comfort lately have felt like a contortion, an odd projection of insecurity.</p><p>Our PC staff showed us a graphic: someone lying in a hammock, hands behind their head, under the label \u201cComfort Zone.\u201d On the other side, a person wearing a crown, flying through the air with wings and a magic wand, labeled \u201cMagic Zone,\u201d a strong, defining line drawn between the two.</p><p>Anytime I see a dualistic model for unpacking a complex concept, I tend to raise an eyebrow. Binary thinking not only pushes us toward fear through comparison, it's often the product of a simplistic, reductionist perspective.</p><p>Be that as it may, the question I'd pose to you, dear reader: what is real comfort?</p><p>Pausing to reflect on my own life, I'm not sure I could point to a single external source I've consistently relied on to make me feel it. Not trying to shit on hammock guy, I'd venture he did feel a real comfort resting there, gently swaying side to side, like an infant held close in a mother's arms.</p><p>But we tend to treat these external supports as proof of an internal security. <i>If I can just find that feeling out there, I'll take it in and turn it into the safety I've been missing.</i> And so we keep chasing, keep looking, for some person or some moment to make us feel not even better, just different.</p><p>Real comfort, the kind that courses through your veins and fills the marrow in your bones, only comes with accepting that no external source will ever give us the feeling we want most. And there's a strange freedom in that. Comfort isn't a place you arrive at. It's what settles in once you stop trying to get there.</p>"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-90.67521846520762, 14.547732763496183] },
+      "properties": {
+        "id": "a-strong-base",
+        "place": "Magdalena Milpas Altas, Guatemala",
+        "title": "A Strong Base",
+        "date": "September 2026",
+        "coords": "14°32′52″N 90°40′31″W",
+        "color": "#7a8590",
+        "order": 3,
+        "teaser": "El Quince, a greased pole, and what do you do with a privilege you didn't earn?",
+        "substack": "",
+        "body": "<p>The 15th of September in Guatemala is el Quince, D\u00eda de la Independencia. This day also marked one full week here in la tierra de la eterna primavera, the land of eternal spring. El Quince is long, filled with school bands marching through the streets: drums, trumpet, clarinet, saxophone, trombone, even a tuba in the bigger high school bands.</p><p>Before leaving the USA, I tried to ask myself how I was arriving to Guate. I waffled, reaching for an answer that felt honest without flattening the privilege I carry.</p><p>I have always known my body is the core privilege I arrive with. However I turn the question, <i>how do I show up?</i>, I return to my body. To the outward eye: six foot two, blonde hair, blue eyes, 195 pounds, tattooed in detailed art, scarred from expensive surgeries.</p><p>My body is my privilege.</p><p>Recently, in an altered state, a thought arrived unbidden, like a bubble bursting, as I walked to the river to bathe, an hour of humid mid-afternoon yoga still on my skin. <i>I am just this body.</i> I wanted to swat it away, <i>I'm more than that</i>, my ego answering fast. The thoughts swirled back and forth as I dove headfirst into a slow, winding eddy.</p><p>On el Quince I was mostly a watcher. My cohort and I walked to the stadium to see the bands perform one by one, and after lunch some of my colleagues joined the dance competitions in the town square, and the blindfolded greased-pig chase, (ask me for the video if you need a laugh). All day I felt a subtle tug to join, and stood back instead, watching, smiling, cheering, being with the people and my fellow PC members.</p><p>The last event of the day belongs to el palo ensebado. A pole had been cemented into the ground days before and lightly covered in grease. Two flags were set along the pole, one thirty feet up and the last at the top, fifty feet in the air. The goal is simple: climb, grab the flags, take the prize, 3,000 quetzales for the first flag and another 1,000 for the last. I gave in. I joined the other men and was met with cheers as I approached.</p><p>I gripped the pole and offered my body as a base, a place for other men to climb. We'd start strong, several of us holding tight while men launched onto our shoulders toward the flags. But tiredness comes fast with a grown man standing on you, and one by one they eventually would slide back down.</p><p>After an hour and a half of failed attempts, myself and the Guatemalan men climbing beside me, stood perplexed, and regrouped. I used the time to rehydrate and process with friends nearby. Suddenly another effort launched, this time without me. A man had a rope hanging loosely around his neck. He scrambled over his friends, fashioned the rope around the pole and both his legs, and over the next hour climbed the entire pole alone, grabbed both flags, and lowered himself slowly back to the ground.</p><p>I arrived at the base of el palo the same way I am arriving in Guate: with my body. I made myself a base, a place for others to stand.</p><p>This wasn't enough. The man who reached the top climbed with patience and a rope, not the brute fact of a body.</p><p>I came with what I have always counted on, and watched my efforts fall short. In the end the flags came down in another man's hands, and the whole square cheered like they were ours.</p>"
       }
     }
   ]
