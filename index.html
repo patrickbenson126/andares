@@ -398,11 +398,19 @@ function init(){
       map.setPaintProperty("thread","line-opacity",dark?.9:.55);
     }
   }
-  let firstLoad=true;
-  // style.load fires on first load AND every setStyle — re-add layers each time
-  map.on("style.load",()=>{
+  function redrawLayers(){
     addThread();
     addPointLayers();
+  }
+  // ensure layers exist once the (possibly just-switched) style is ready
+  function ensureLayers(){
+    if(map.isStyleLoaded()){redrawLayers();}
+    else{map.once("idle",redrawLayers);}
+  }
+
+  let firstLoad=true;
+  map.on("style.load",()=>{
+    redrawLayers();
     if(firstLoad){
       const b=new maplibregl.LngLatBounds();entries.forEach(e=>b.extend(e.coordinates));
       map.fitBounds(b,{padding:70,maxZoom:6,duration:0});
@@ -446,6 +454,9 @@ function init(){
       btn.classList.add("on");
       MT_CURRENT=btn.dataset.style; localStorage_setSafe("andares_mapstyle",MT_CURRENT);
       map.setStyle(MT_STYLE());
+      // belt-and-suspenders: some MapLibre versions don't fire style.load on setStyle
+      setTimeout(ensureLayers,400);
+      map.once("styledata",ensureLayers);
     });
   });
 
