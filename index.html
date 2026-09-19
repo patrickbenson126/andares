@@ -356,37 +356,50 @@ function init(){
   }))};
 
   function addPointLayers(){
-    if(map.getSource("entries"))return;
-    map.addSource("entries",{type:"geojson",data:pointsFC,cluster:true,clusterRadius:38,clusterMaxZoom:11});
-    // cluster bubbles
-    map.addLayer({id:"clusters",type:"circle",source:"entries",filter:["has","point_count"],
-      paint:{
-        "circle-color":"#2e7d5b",
-        "circle-opacity":0.9,
-        "circle-radius":["step",["get","point_count"],16,5,20,15,26],
-        "circle-stroke-width":3,"circle-stroke-color":"#fbfaf3"
-      }});
-    map.addLayer({id:"cluster-count",type:"symbol",source:"entries",filter:["has","point_count"],
-      layout:{"text-field":["get","point_count_abbreviated"],"text-font":["Open Sans Bold","Arial Unicode MS Bold"],"text-size":14},
-      paint:{"text-color":"#fbfaf3"}});
-    // individual points (use each entry's color)
-    map.addLayer({id:"pts",type:"circle",source:"entries",filter:["!",["has","point_count"]],
-      paint:{
-        "circle-color":["get","color"],
-        "circle-radius":8,
-        "circle-stroke-width":2.5,"circle-stroke-color":"#fbfaf3"
-      }});
+    if(!map.getSource("entries")){
+      map.addSource("entries",{type:"geojson",data:pointsFC,cluster:true,clusterRadius:38,clusterMaxZoom:11});
+    }
+    if(!map.getLayer("clusters")){
+      map.addLayer({id:"clusters",type:"circle",source:"entries",filter:["has","point_count"],
+        paint:{
+          "circle-color":"#2e7d5b",
+          "circle-opacity":0.9,
+          "circle-radius":["step",["get","point_count"],16,5,20,15,26],
+          "circle-stroke-width":3,"circle-stroke-color":"#fbfaf3"
+        }});
+    }
+    if(!map.getLayer("cluster-count")){
+      map.addLayer({id:"cluster-count",type:"symbol",source:"entries",filter:["has","point_count"],
+        layout:{"text-field":["get","point_count_abbreviated"],"text-font":["Open Sans Bold","Arial Unicode MS Bold"],"text-size":14},
+        paint:{"text-color":"#fbfaf3"}});
+    }
+    if(!map.getLayer("pts")){
+      map.addLayer({id:"pts",type:"circle",source:"entries",filter:["!",["has","point_count"]],
+        paint:{
+          "circle-color":["get","color"],
+          "circle-radius":8,
+          "circle-stroke-width":2.5,"circle-stroke-color":"#fbfaf3"
+        }});
+    }
   }
 
   // (re)draw the journey thread — must run on every style load, since
   // switching styles clears custom sources/layers.
   function addThread(){
-    if(map.getSource("thread"))return;
     const dark=(MT_CURRENT==="satellite"||MT_CURRENT==="hybrid");
-    map.addSource("thread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:threadCoords()}}});
-    map.addLayer({id:"thread",type:"line",source:"thread",paint:{"line-color":dark?"#ffffff":"#4a6353","line-width":2,"line-dasharray":[2,2],"line-opacity":dark?.9:.55}});
+    if(!map.getSource("thread")){
+      map.addSource("thread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:threadCoords()}}});
+    }
+    if(!map.getLayer("thread")){
+      map.addLayer({id:"thread",type:"line",source:"thread",paint:{"line-color":dark?"#ffffff":"#4a6353","line-width":2,"line-dasharray":[2,2],"line-opacity":dark?.9:.55}},
+        map.getLayer("clusters")?"clusters":undefined);
+    }else{
+      map.setPaintProperty("thread","line-color",dark?"#ffffff":"#4a6353");
+      map.setPaintProperty("thread","line-opacity",dark?.9:.55);
+    }
   }
   let firstLoad=true;
+  // style.load fires on first load AND every setStyle — re-add layers each time
   map.on("style.load",()=>{
     addThread();
     addPointLayers();
@@ -402,16 +415,24 @@ function init(){
     const id=ev.features[0].properties.id;
     if(id)openEntry(id);
   });
-  // click a cluster -> zoom in to expand it
+  // click a cluster -> slow zoom into it
   map.on("click","clusters",(ev)=>{
-    const f=map.queryRenderedFeatures(ev.point,{layers:["clusters"]})[0];
+    const feats=map.queryRenderedFeatures(ev.point,{layers:["clusters"]});
+    if(!feats.length)return;
+    const f=feats[0];
     const cid=f.properties.cluster_id;
-    map.getSource("entries").getClusterExpansionZoom(cid,(err,zoom)=>{
-      if(err)return;
-      map.easeTo({center:f.geometry.coordinates,zoom:zoom+0.3,duration:600});
+    const src=map.getSource("entries");
+    const center=f.geometry.coordinates.slice();
+    src.getClusterExpansionZoom(cid).then(zoom=>{
+      map.easeTo({center:center,zoom:(zoom||map.getZoom()+2)+0.4,duration:1100,easing:t=>t*(2-t)});
+    }).catch(()=>{
+      // fallback for older callback-style API
+      src.getClusterExpansionZoom(cid,(err,zoom)=>{
+        if(err)return;
+        map.easeTo({center:center,zoom:zoom+0.4,duration:1100,easing:t=>t*(2-t)});
+      });
     });
   });
-  // pointer cursor on hover
   ["pts","clusters"].forEach(l=>{
     map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer");
     map.on("mouseleave",l,()=>map.getCanvas().style.cursor="");
