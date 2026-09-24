@@ -103,6 +103,7 @@
   .ev-place::before{content:"◆ ";font-size:9px;vertical-align:1.5px}
   .ev-coords{font-size:11.5px;color:var(--ink-faint);letter-spacing:.02em;margin:3px 0 0;font-variant-numeric:tabular-nums}
   .ev-title{margin:18px 0 4px;font-size:34px;font-weight:700;line-height:1.08;letter-spacing:-.015em}
+  .ev-subtitle{margin:0 0 4px;font-size:19px;font-style:italic;color:var(--pc,var(--emerald));font-weight:400}
   .ev-date{font-size:13.5px;font-style:italic;color:var(--ink-faint);margin:0 0 30px}
   .poem-body{font-size:18.5px;line-height:1.6}
   .poem-body .stanza{margin:0 0 24px}
@@ -178,6 +179,7 @@
         <p class="ev-meta"><span class="ev-place" id="evPlace"></span></p>
         <p class="ev-coords" id="evCoords"></p>
         <h1 class="ev-title" id="evTitle"></h1>
+        <p class="ev-subtitle" id="evSubtitle"></p>
         <p class="ev-date" id="evDate"></p>
         <div class="poem-body" id="evBody"></div>
       </div>
@@ -230,7 +232,8 @@ function loadEntries(){
             coordinates:g.coordinates,
             stanzas:Array.isArray(p.stanzas)?p.stanzas:null,
             body:(typeof p.body==="string"?p.body:""),
-            teaser:(typeof p.teaser==="string"?p.teaser:"")
+            teaser:(typeof p.teaser==="string"?p.teaser:""),
+            subtitle:(typeof p.subtitle==="string"?p.subtitle:"")
           });
         } else if(g.type==="LineString" && p.role==="route"){
           routeOverride=g.coordinates;
@@ -295,6 +298,8 @@ function openEntry(id){
   document.getElementById("evPlace").textContent=e.place;
   document.getElementById("evCoords").textContent=e.coords;
   document.getElementById("evTitle").textContent=e.title;
+  var evSub=document.getElementById("evSubtitle");
+  if(e.subtitle){evSub.textContent=e.subtitle;evSub.style.display="";}else{evSub.textContent="";evSub.style.display="none";}
   document.getElementById("evDate").textContent=e.date;
   const body=document.getElementById("evBody");
   document.querySelector("#entryview .ev-read").style.setProperty("--pc",e.color);
