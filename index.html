@@ -112,6 +112,10 @@
   .poem-body figure{margin:28px 0 30px}
   .poem-body figure img{width:100%;height:auto;display:block;border-radius:6px;box-shadow:0 2px 14px rgba(0,0,0,.14)}
   .poem-body figure figcaption{margin-top:9px;font-size:13.5px;font-style:italic;color:var(--ink-soft);text-align:center}
+  .route-callout .maplibregl-popup-content{font-family:inherit;padding:8px 12px;border-radius:7px;box-shadow:0 4px 16px rgba(31,61,46,.22);font-size:13px;line-height:1.35}
+  .route-callout .maplibregl-popup-content strong{color:var(--emerald)}
+  .route-callout .maplibregl-popup-content span{color:var(--ink-soft);font-style:italic;font-size:12px}
+  .route-callout .maplibregl-popup-tip{display:none}
   .ev-map{position:relative;background:#eae4d3}
   .ev-switch{position:absolute;top:14px;left:14px;z-index:5;margin:0;padding:6px;
     background:rgba(251,250,243,.82);border-radius:22px;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);box-shadow:0 3px 12px rgba(31,61,46,.18)}
@@ -266,7 +270,8 @@ function buildEntryMap(e){
   emap.on("style.load",()=>{
     if(pologuaRoute && !emap.getSource("eroute")){
       emap.addSource("eroute",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:pologuaRoute}}});
-      emap.addLayer({id:"eroute",type:"line",source:"eroute",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":dark?"#d6d4cf":"#8a8f8c","line-width":4,"line-opacity":dark?.95:.9}});
+      emap.addLayer({id:"eroute-casing",type:"line",source:"eroute",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":dark?"#3a3a38":"#fbfaf3","line-width":7.5,"line-opacity":.85}});
+      emap.addLayer({id:"eroute",type:"line",source:"eroute",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":dark?"#e6e4df":"#6f756f","line-width":3.5,"line-opacity":dark?.95:.92}});
     }
     if(!emap.getSource("ethread")){
       emap.addSource("ethread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:threadCoords()}}});
@@ -391,8 +396,20 @@ function init(){
         paint:{
           "circle-color":["get","color"],
           "circle-radius":8,
-          "circle-stroke-width":2.5,"circle-stroke-color":"#fbfaf3"
+          "circle-stroke-width":3,"circle-stroke-color":"#fbfaf3"
         }});
+    }
+    // title labels so each uncovered point announces itself as an entry
+    if(!map.getLayer("pt-labels")){
+      map.addLayer({id:"pt-labels",type:"symbol",source:"entries",filter:["!",["has","point_count"]],
+        layout:{
+          "text-field":["get","title"],
+          "text-font":["Open Sans Semibold","Arial Unicode MS Bold"],
+          "text-size":12.5,
+          "text-offset":[0,1.25],"text-anchor":"top",
+          "text-optional":true,"text-allow-overlap":false
+        },
+        paint:{"text-color":"#2b2b26","text-halo-color":"#fbfaf3","text-halo-width":1.8}});
     }
   }
 
@@ -411,22 +428,34 @@ function init(){
       map.setPaintProperty("thread","line-opacity",dark?.9:.55);
     }
   }
-  // the traced route (e.g. the long haul out to Pologuá) — a bold concrete line,
-  // sitting under the dashed thread and the pins.
+  // the traced route (the long haul out to Pologuá) — a drawn line tied to its
+  // entry: light casing + concrete core so it reads as hand-drawn, not a road,
+  // plus a wide invisible hit layer so it's easy to click/hover.
+  function routeTarget(){ const r=entries.find(e=>e.id==="pologua"); return r?r.id:(entries.length?entries[entries.length-1].id:null); }
   function addRoute(){
     if(!pologuaRoute) return;
     const dark=(MT_CURRENT==="satellite"||MT_CURRENT==="hybrid");
+    const core=dark?"#e6e4df":"#6f756f";
+    const casing=dark?"#3a3a38":"#fbfaf3";
     if(!map.getSource("route")){
       map.addSource("route",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:pologuaRoute}}});
     }
+    const below=map.getLayer("thread")?"thread":(map.getLayer("clusters")?"clusters":undefined);
+    if(!map.getLayer("route-casing")){
+      map.addLayer({id:"route-casing",type:"line",source:"route",
+        layout:{"line-cap":"round","line-join":"round"},
+        paint:{"line-color":casing,"line-width":8,"line-opacity":.85}},below);
+    }else{map.setPaintProperty("route-casing","line-color",casing);}
     if(!map.getLayer("route")){
-      const below=map.getLayer("thread")?"thread":(map.getLayer("clusters")?"clusters":undefined);
       map.addLayer({id:"route",type:"line",source:"route",
         layout:{"line-cap":"round","line-join":"round"},
-        paint:{"line-color":dark?"#d6d4cf":"#8a8f8c","line-width":4.5,"line-opacity":dark?.95:.9}},below);
-    }else{
-      map.setPaintProperty("route","line-color",dark?"#d6d4cf":"#8a8f8c");
-      map.setPaintProperty("route","line-opacity",dark?.95:.9);
+        paint:{"line-color":core,"line-width":4,"line-opacity":dark?.95:.92}},below);
+    }else{map.setPaintProperty("route","line-color",core);map.setPaintProperty("route","line-opacity",dark?.95:.92);}
+    // wide transparent line on top = generous click/hover target
+    if(!map.getLayer("route-hit")){
+      map.addLayer({id:"route-hit",type:"line",source:"route",
+        layout:{"line-cap":"round","line-join":"round"},
+        paint:{"line-color":"#000","line-width":22,"line-opacity":0}},below);
     }
   }
   function redrawLayers(){
@@ -477,6 +506,16 @@ function init(){
     map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer");
     map.on("mouseleave",l,()=>map.getCanvas().style.cursor="");
   });
+
+  // the route line behaves like part of its entry: click opens it, hover
+  // shows a small callout so it's clear what the line is.
+  const routePopup=new maplibregl.Popup({offset:10,closeButton:false,closeOnClick:false,className:"route-callout"});
+  map.on("click","route-hit",(ev)=>{const id=routeTarget();if(id)openEntry(id);});
+  map.on("mousemove","route-hit",(ev)=>{
+    map.getCanvas().style.cursor="pointer";
+    routePopup.setLngLat(ev.lngLat).setHTML('<strong>my trip out to Pologuá</strong><br><span>tap the line to read it →</span>').addTo(map);
+  });
+  map.on("mouseleave","route-hit",()=>{map.getCanvas().style.cursor="";routePopup.remove();});
 
   // style switcher
   document.querySelectorAll("#styleswitch button").forEach(btn=>{
