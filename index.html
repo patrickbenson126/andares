@@ -109,6 +109,9 @@
   .poem-body .stanza{margin:0 0 24px}
   .poem-body .refrain{display:block;margin-top:4px;font-style:italic;color:var(--pc,var(--emerald))}
   .poem-body p{margin:0 0 1.1em;font-size:17px;line-height:1.7}
+  .poem-body figure{margin:28px 0 30px}
+  .poem-body figure img{width:100%;height:auto;display:block;border-radius:6px;box-shadow:0 2px 14px rgba(0,0,0,.14)}
+  .poem-body figure figcaption{margin-top:9px;font-size:13.5px;font-style:italic;color:var(--ink-soft);text-align:center}
   .ev-map{position:relative;background:#eae4d3}
   .ev-switch{position:absolute;top:14px;left:14px;z-index:5;margin:0;padding:6px;
     background:rgba(251,250,243,.82);border-radius:22px;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);box-shadow:0 3px 12px rgba(31,61,46,.18)}
@@ -216,6 +219,7 @@ function localStorage_setSafe(k,v){try{window.localStorage.setItem(k,v);}catch(e
    `entries` fills in at load; `routeOverride` holds an optional real route line. */
 let entries=[];
 let routeOverride=null;
+let pologuaRoute=null;   // a real traced route line, drawn as its own bold layer
 
 function loadEntries(){
   return fetch("entries.geojson",{cache:"no-store"})
@@ -236,7 +240,7 @@ function loadEntries(){
             subtitle:(typeof p.subtitle==="string"?p.subtitle:"")
           });
         } else if(g.type==="LineString" && p.role==="route"){
-          routeOverride=g.coordinates;
+          pologuaRoute=g.coordinates;
         }
       });
       pts.sort((a,b)=>a.order-b.order);       // thread/order by 'order'
@@ -260,6 +264,10 @@ function buildEntryMap(e){
 
   const dark=(MT_CURRENT==="satellite"||MT_CURRENT==="hybrid");
   emap.on("style.load",()=>{
+    if(pologuaRoute && !emap.getSource("eroute")){
+      emap.addSource("eroute",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:pologuaRoute}}});
+      emap.addLayer({id:"eroute",type:"line",source:"eroute",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":dark?"#d6d4cf":"#8a8f8c","line-width":4,"line-opacity":dark?.95:.9}});
+    }
     if(!emap.getSource("ethread")){
       emap.addSource("ethread",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:threadCoords()}}});
       emap.addLayer({id:"ethread",type:"line",source:"ethread",paint:{"line-color":dark?"#ffffff":"#4a6353","line-width":2,"line-dasharray":[2,2],"line-opacity":dark?.9:.5}});
@@ -403,7 +411,26 @@ function init(){
       map.setPaintProperty("thread","line-opacity",dark?.9:.55);
     }
   }
+  // the traced route (e.g. the long haul out to Pologuá) — a bold concrete line,
+  // sitting under the dashed thread and the pins.
+  function addRoute(){
+    if(!pologuaRoute) return;
+    const dark=(MT_CURRENT==="satellite"||MT_CURRENT==="hybrid");
+    if(!map.getSource("route")){
+      map.addSource("route",{type:"geojson",data:{type:"Feature",geometry:{type:"LineString",coordinates:pologuaRoute}}});
+    }
+    if(!map.getLayer("route")){
+      const below=map.getLayer("thread")?"thread":(map.getLayer("clusters")?"clusters":undefined);
+      map.addLayer({id:"route",type:"line",source:"route",
+        layout:{"line-cap":"round","line-join":"round"},
+        paint:{"line-color":dark?"#d6d4cf":"#8a8f8c","line-width":4.5,"line-opacity":dark?.95:.9}},below);
+    }else{
+      map.setPaintProperty("route","line-color",dark?"#d6d4cf":"#8a8f8c");
+      map.setPaintProperty("route","line-opacity",dark?.95:.9);
+    }
+  }
   function redrawLayers(){
+    addRoute();
     addThread();
     addPointLayers();
   }
